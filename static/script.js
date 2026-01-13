@@ -421,6 +421,7 @@ async function trackShow(showName, profileId) {
     document.getElementById('add-show-max-age').value = '30';
 
 
+
     document.getElementById('add-show-page-1').style.display = 'none';
     document.getElementById('add-show-page-2').style.display = 'block';
 }
@@ -507,4 +508,4 @@ function showNotification(message, type) {
 }
 
 // Initial load
-loadSources();
+loadTrackedShows();
