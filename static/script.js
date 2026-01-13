@@ -28,10 +28,62 @@ document.querySelectorAll('.nav-tab').forEach(button => {
 });
 
 // Settings modal
+document.querySelectorAll('.settings-tab').forEach(button => {
+    button.addEventListener('click', () => {
+        const tabName = button.dataset.tab;
+
+        document.querySelectorAll('.settings-tab').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        button.classList.add('active');
+
+        document.querySelectorAll('.settings-tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        document.getElementById(`${tabName}-settings-tab`).classList.add('active');
+    });
+});
+
 document.getElementById('settings-btn').addEventListener('click', () => {
     document.getElementById('settings-modal').classList.add('visible');
-    loadTransmissionSettings();
+    loadSettings();
 });
+
+document.getElementById('general-settings-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = {
+        download_directory: document.getElementById('download-directory').value
+    };
+    try {
+        const response = await fetch(`${API_BASE}/settings`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        if (response.ok) {
+            showNotification('Settings saved', 'success');
+            document.getElementById('settings-modal').classList.remove('visible');
+        }
+    } catch (error) {
+        showNotification('Error saving settings', 'error');
+    }
+});
+
+async function loadSettings() {
+    try {
+        const response = await fetch(`${API_BASE}/settings`);
+        const settings = await response.json();
+
+        document.getElementById('download-directory').value = settings.download_directory || '';
+        document.getElementById('transmission-host').value =
+            settings.transmission_host || 'localhost';
+        document.getElementById('transmission-port').value =
+            settings.transmission_port || '9091';
+    } catch (error) {
+        console.error('Error loading settings:', error);
+    }
+}
+
 
 document.querySelector('.close-settings').addEventListener('click', () => {
     document.getElementById('settings-modal').classList.remove('visible');
@@ -190,19 +242,7 @@ document.getElementById('transmission-form')
         }
     });
 
-async function loadTransmissionSettings() {
-    try {
-        const response = await fetch(`${API_BASE}/settings`);
-        const settings = await response.json();
 
-        document.getElementById('transmission-host').value =
-            settings.transmission_host || 'localhost';
-        document.getElementById('transmission-port').value =
-            settings.transmission_port || '9091';
-    } catch (error) {
-        console.error('Error loading transmission settings:', error);
-    }
-}
 
 function openAddShowModal() {
     document.getElementById('add-show-modal').classList.add('visible');
@@ -274,11 +314,83 @@ async function loadShows(searchQuery = '') {
     }
 }
 
+document.getElementById('add-show-back-btn').addEventListener('click', () => {
+    document.getElementById('add-show-page-2').style.display = 'none';
+    document.getElementById('add-show-page-1').style.display = 'block';
+});
+
+document.getElementById('add-show-details-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const data = {
+        show_name: document.getElementById('add-show-name').value,
+        profile_id: document.getElementById('add-show-profile-id').value,
+        season_name: document.getElementById('add-show-season').value,
+        max_age: document.getElementById('add-show-max-age').value
+    };
+
+    try {
+        const response = await fetch(`${API_BASE}/tracked`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            document.getElementById('add-show-modal').classList.remove('visible');
+            showNotification('Show tracked successfully', 'success');
+            
+            // Switch to shows tab and reload
+            document.querySelector('.nav-tab[data-tab="shows"]').click();
+        }
+    } catch (error) {
+        showNotification('Error tracking show', 'error');
+    }
+});
+
+function openEditShowModal(show) {
+    const modal = document.getElementById('edit-show-modal');
+    modal.classList.add('visible');
+
+    document.getElementById('edit-show-id').value = show.id;
+    document.getElementById('edit-show-name').value = show.show_name;
+    document.getElementById('edit-show-season').value = show.season_name || '';
+    document.getElementById('edit-show-max-age').value = show.max_age || '';
+}
+
+document.getElementById('edit-show-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const showId = document.getElementById('edit-show-id').value;
+    const data = {
+        show_name: document.getElementById('edit-show-name').value,
+        season_name: document.getElementById('edit-show-season').value,
+        max_age: document.getElementById('edit-show-max-age').value
+    };
+
+    try {
+        const response = await fetch(`${API_BASE}/tracked/${showId}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            document.getElementById('edit-show-modal').classList.remove('visible');
+            loadTrackedShows();
+            showNotification('Show updated successfully', 'success');
+        }
+    } catch (error) {
+        showNotification('Error updating show', 'error');
+    }
+});
+
 // Modal close
 window.addEventListener('click', (e) => {
     const addModal = document.getElementById('add-show-modal');
     const settingsModal = document.getElementById('settings-modal');
     const sourceModal = document.getElementById('source-modal');
+    const editShowModal = document.getElementById('edit-show-modal');
 
     if (e.target === addModal) {
         addModal.classList.remove('visible');
@@ -289,34 +401,25 @@ window.addEventListener('click', (e) => {
     if (e.target === sourceModal) {
         sourceModal.classList.remove('visible');
     }
+    if (e.target === editShowModal) {
+        editShowModal.classList.remove('visible');
+    }
 });
 
 document.querySelector('.close-edit').addEventListener('click', () => {
     document.getElementById('source-modal').classList.remove('visible');
 });
 
-async function trackShow(showName, profileId) {
-    try {
-        const response = await fetch(`${API_BASE}/tracked`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                show_name: showName,
-                profile_id: profileId
-            })
-        });
+document.querySelector('.close-edit-show').addEventListener('click', () => {
+    document.getElementById('edit-show-modal').classList.remove('visible');
+});
 
-        if (response.ok) {
-            document.getElementById('add-show-modal')
-                .classList.remove('visible');
-            showNotification('Show tracked successfully', 'success');
-            
-            // Switch to shows tab and reload
-            document.querySelector('.nav-tab[data-tab="shows"]').click();
-        }
-    } catch (error) {
-        showNotification('Error tracking show', 'error');
-    }
+async function trackShow(showName, profileId) {
+    document.getElementById('add-show-name').value = showName;
+    document.getElementById('add-show-profile-id').value = profileId;
+
+    document.getElementById('add-show-page-1').style.display = 'none';
+    document.getElementById('add-show-page-2').style.display = 'block';
 }
 
 // Tracked shows
@@ -344,9 +447,9 @@ async function loadTrackedShows() {
         }
 
         content += tracked.map(show => `
-            <div class="show-card">
+            <div class="show-card" onclick='openEditShowModal(${JSON.stringify(show)})'>
                 <button class="show-card-remove"
-                        onclick="untrackShow(${show.id})"
+                        onclick="event.stopPropagation(); untrackShow(${show.id})"
                         title="Remove show">
                     <span class="material-icons">delete</span>
                 </button>

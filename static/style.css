@@ -545,6 +545,41 @@ body {
     line-height: 1.3;
 }
 
+.settings-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--nord3);
+    margin-bottom: 20px;
+}
+
+.settings-tab {
+    padding: 10px 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--nord4);
+    transition: all 0.3s ease;
+    border-bottom: 3px solid transparent;
+}
+
+.settings-tab:hover {
+    color: var(--nord6);
+}
+
+.settings-tab.active {
+    color: var(--nord8);
+    border-bottom-color: var(--nord8);
+}
+
+.settings-tab-content {
+    display: none;
+}
+
+.settings-tab-content.active {
+    display: block;
+}
+
 /* Modal */
 .modal {
     display: none;

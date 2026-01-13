@@ -56,9 +56,19 @@ def init_db():
             feed_url TEXT NOT NULL,
             profile_id INTEGER,
             added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            season_name TEXT,
+            max_age INTEGER,
             FOREIGN KEY (profile_id) REFERENCES feed_profiles (id)
         )
     ''')
+
+    # Add season_name and max_age columns if they don't exist
+    try:
+        c.execute('ALTER TABLE tracked_shows ADD COLUMN season_name TEXT')
+        c.execute('ALTER TABLE tracked_shows ADD COLUMN max_age INTEGER')
+        print("Added season_name and max_age columns to tracked_shows")
+    except sqlite3.OperationalError:
+        pass # Columns already exist
 
     # Downloaded torrents table to track what we've already added
     c.execute('''
@@ -113,6 +123,10 @@ def init_db():
         INSERT OR IGNORE INTO settings (key, value)
         VALUES ('transmission_port', '9091')
     ''')
+    c.execute('''
+        INSERT OR IGNORE INTO settings (key, value)
+        VALUES ('download_directory', '')
+    ''')
 
     # Create index for faster searches
     c.execute('''
@@ -139,15 +153,19 @@ def get_transmission_client():
         c.execute('SELECT value FROM settings WHERE key = ?',
                   ('transmission_port',))
         port_row = c.fetchone()
+        c.execute('SELECT value FROM settings WHERE key = ?',
+                  ('download_directory',))
+        download_dir_row = c.fetchone()
         conn.close()
 
         host = host_row[0] if host_row else 'localhost'
         port = int(port_row[0]) if port_row else 9091
+        download_dir = download_dir_row[0] if download_dir_row else None
 
-        return transmissionrpc.Client(address=host, port=port)
+        return transmissionrpc.Client(address=host, port=port), download_dir
     except Exception as e:
         print(f"Transmission connection error: {e}")
-        return None
+        return None, None
 
 
 def parse_anime_title(title: str) -> Optional[str]:
@@ -247,7 +265,7 @@ def check_and_download_torrents():
             c.execute('SELECT * FROM tracked_shows')
             tracked_shows = c.fetchall()
 
-            tc = get_transmission_client()
+            tc, download_dir = get_transmission_client()
             if not tc:
                 print("Cannot connect to Transmission, skipping check")
                 conn.close()
@@ -255,7 +273,7 @@ def check_and_download_torrents():
                 continue
 
             for show in tracked_shows:
-                show_id, show_name, feed_url, profile_id, _ = show
+                show_id, show_name, feed_url, profile_id, _, _, _ = show
 
                 try:
                     # Parse the RSS feed
@@ -289,7 +307,7 @@ def check_and_download_torrents():
 
                         # Add torrent to Transmission
                         try:
-                            tc.add_torrent(torrent_url)
+                            tc.add_torrent(torrent_url, download_dir=download_dir)
                             print(f"Added to Transmission: {entry.title}")
 
                             # Only record if successfully added
@@ -395,9 +413,9 @@ def check_single_show(tracked_show_id):
             conn.close()
             return
 
-        show_id, show_name, feed_url, profile_id, _ = show
+        show_id, show_name, feed_url, profile_id, _, _, _ = show
 
-        tc = get_transmission_client()
+        tc, download_dir = get_transmission_client()
         if not tc:
             print("Cannot connect to Transmission")
             conn.close()
@@ -430,7 +448,7 @@ def check_single_show(tracked_show_id):
                 continue
 
             try:
-                tc.add_torrent(torrent_url)
+                tc.add_torrent(torrent_url, download_dir=download_dir)
                 print(f"Added to Transmission: {entry.title}")
 
                 # Only record if successfully added
@@ -664,6 +682,7 @@ def manage_tracked_shows():
     if request.method == 'GET':
         c.execute('''
             SELECT ts.id, ts.show_name, ts.feed_url, ts.profile_id, ts.added_at,
+                   ts.season_name, ts.max_age,
                    fp.name as profile_name, fp.base_url, fp.uploader, fp.quality, fp.color
             FROM tracked_shows ts
             LEFT JOIN feed_profiles fp ON ts.profile_id = fp.id
@@ -677,6 +696,8 @@ def manage_tracked_shows():
                 'feed_url': row['feed_url'],
                 'profile_id': row['profile_id'],
                 'added_at': row['added_at'],
+                'season_name': row['season_name'],
+                'max_age': row['max_age'],
                 'profile_name': row['profile_name'],
                 'base_url': row['base_url'],
                 'uploader': row['uploader'],
@@ -690,6 +711,8 @@ def manage_tracked_shows():
         data = request.json
         show_name = data['show_name']
         profile_id = data['profile_id']
+        season_name = data.get('season_name')
+        max_age = data.get('max_age')
 
         # Get profile details
         c.execute('SELECT * FROM feed_profiles WHERE id = ?',
@@ -709,9 +732,9 @@ def manage_tracked_shows():
         feed_url = build_feed_url(base_url, uploader, quality, show_name)
 
         c.execute('''
-            INSERT INTO tracked_shows (show_name, feed_url, profile_id)
-            VALUES (?, ?, ?)
-        ''', (show_name, feed_url, profile_id))
+            INSERT INTO tracked_shows (show_name, feed_url, profile_id, season_name, max_age)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (show_name, feed_url, profile_id, season_name, max_age))
         conn.commit()
         tracked_id = c.lastrowid
         conn.close()
@@ -730,15 +753,33 @@ def manage_tracked_shows():
         }), 201
 
 
-@app.route('/api/tracked/<int:tracked_id>', methods=['DELETE'])
+@app.route('/api/tracked/<int:tracked_id>', methods=['DELETE', 'PUT'])
 def delete_tracked_show(tracked_id):
     """Remove a tracked show."""
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    c.execute('DELETE FROM tracked_shows WHERE id = ?', (tracked_id,))
-    conn.commit()
-    conn.close()
-    return jsonify({'status': 'removed'})
+
+    if request.method == 'DELETE':
+        c.execute('DELETE FROM tracked_shows WHERE id = ?', (tracked_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({'status': 'removed'})
+
+    elif request.method == 'PUT':
+        data = request.json
+        c.execute('''
+            UPDATE tracked_shows
+            SET show_name = ?, season_name = ?, max_age = ?
+            WHERE id = ?
+        ''', (
+            data['show_name'],
+            data.get('season_name'),
+            data.get('max_age'),
+            tracked_id
+        ))
+        conn.commit()
+        conn.close()
+        return jsonify({'id': tracked_id, 'status': 'updated'}), 200
 
 
 @app.route('/api/transmission/torrents', methods=['GET'])

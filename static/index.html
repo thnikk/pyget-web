@@ -96,25 +96,43 @@
     <div id="settings-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Transmission Settings</h3>
+                <h3>Settings</h3>
                 <span class="close-settings">&times;</span>
             </div>
             <div class="modal-body">
-                <form id="transmission-form">
-                    <div class="form-group">
-                        <label for="transmission-host">Host:</label>
-                        <input type="text" id="transmission-host"
-                               placeholder="localhost" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="transmission-port">Port:</label>
-                        <input type="number" id="transmission-port"
-                               placeholder="9091" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">
-                        Save Settings
-                    </button>
-                </form>
+                <div class="settings-tabs">
+                    <button class="settings-tab active" data-tab="general">General</button>
+                    <button class="settings-tab" data-tab="transmission">Transmission</button>
+                </div>
+                <div id="general-settings-tab" class="settings-tab-content active">
+                    <form id="general-settings-form">
+                        <div class="form-group">
+                            <label for="download-directory">Download directory:</label>
+                            <input type="text" id="download-directory"
+                                   placeholder="/downloads" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            Save Settings
+                        </button>
+                    </form>
+                </div>
+                <div id="transmission-settings-tab" class="settings-tab-content">
+                    <form id="transmission-form">
+                        <div class="form-group">
+                            <label for="transmission-host">Host:</label>
+                            <input type="text" id="transmission-host"
+                                   placeholder="localhost" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="transmission-port">Port:</label>
+                            <input type="number" id="transmission-port"
+                                   placeholder="9091" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            Save Settings
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
@@ -127,16 +145,63 @@
                 <span class="close-add">&times;</span>
             </div>
             <div class="modal-body">
-                <div class="search-container" style="margin-bottom: 20px;">
-                    <input type="text" id="show-search"
-                           placeholder="Search available shows...">
+                <div id="add-show-page-1">
+                    <div class="search-container" style="margin-bottom: 20px;">
+                        <input type="text" id="show-search"
+                               placeholder="Search available shows...">
+                    </div>
+                    <div id="shows-list" class="list-container"
+                         style="max-height: 400px; overflow-y: auto;">
+                    </div>
                 </div>
-                <div id="shows-list" class="list-container"
-                     style="max-height: 400px; overflow-y: auto;">
+                <div id="add-show-page-2" style="display: none;">
+                    <form id="add-show-details-form">
+                        <input type="hidden" id="add-show-name">
+                        <input type="hidden" id="add-show-profile-id">
+                        <div class="form-group">
+                            <label for="add-show-season">Season:</label>
+                            <input type="text" id="add-show-season" value="Season 01">
+                        </div>
+                        <div class="form-group">
+                            <label for="add-show-max-age">Max Age (days):</label>
+                            <input type="number" id="add-show-max-age" value="30">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Track Show</button>
+                        <button type="button" class="btn btn-secondary" id="add-show-back-btn">Back</button>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Modal for editing show -->
+    <div id="edit-show-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Show</h3>
+                <span class="close-edit-show">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="edit-show-form">
+                    <input type="hidden" id="edit-show-id">
+                    <div class="form-group">
+                        <label for="edit-show-name">Show Name:</label>
+                        <input type="text" id="edit-show-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-show-season">Season:</label>
+                        <input type="text" id="edit-show-season">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-show-max-age">Max Age (days):</label>
+                        <input type="number" id="edit-show-max-age">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
 
     <script src="script.js"></script>
 </body>
