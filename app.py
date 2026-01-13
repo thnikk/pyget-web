@@ -3,14 +3,12 @@
 Anime RSS feed manager with Transmission integration.
 Provides API endpoints for managing RSS feed profiles and tracked shows.
 """
-import json
 import re
 import sqlite3
 import threading
 import time
-from datetime import datetime
-from typing import Dict, List, Optional
-from urllib.parse import quote, urlencode
+from typing import Optional
+from urllib.parse import urlencode
 
 import feedparser
 import transmissionrpc
@@ -38,9 +36,17 @@ def init_db():
             base_url TEXT NOT NULL,
             uploader TEXT,
             quality TEXT,
+            color TEXT DEFAULT '#88c0d0',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+
+    # Add color column if it doesn't exist (for existing databases)
+    try:
+        c.execute('ALTER TABLE feed_profiles ADD COLUMN color TEXT DEFAULT "#88c0d0"')
+        print("Added color column to feed_profiles")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
 
     # Tracked shows table
     c.execute('''
@@ -77,10 +83,18 @@ def init_db():
             base_url TEXT NOT NULL,
             uploader TEXT,
             quality TEXT,
+            color TEXT,
             cached_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (profile_id) REFERENCES feed_profiles (id)
         )
     ''')
+
+    # Add color column to cached_shows if it doesn't exist
+    try:
+        c.execute('ALTER TABLE cached_shows ADD COLUMN color TEXT')
+        print("Added color column to cached_shows")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
 
     # Settings table for transmission config
     c.execute('''
@@ -183,7 +197,13 @@ def update_cached_shows_once():
         profiles = c.fetchall()
 
         for profile in profiles:
-            profile_id, name, base_url, uploader, quality, _ = profile
+            # Handle both old and new schema
+            if len(profile) >= 7:
+                profile_id, name, base_url, uploader, quality, color, _ = profile
+            else:
+                profile_id, name, base_url, uploader, quality, _ = profile
+                color = '#88c0d0'
+                
             feed_url = build_feed_url(base_url, uploader, quality)
 
             try:
@@ -198,10 +218,10 @@ def update_cached_shows_once():
                         c.execute('''
                             INSERT INTO cached_shows
                             (show_name, profile_id, profile_name,
-                             base_url, uploader, quality)
-                            VALUES (?, ?, ?, ?, ?, ?)
+                             base_url, uploader, quality, color)
+                            VALUES (?, ?, ?, ?, ?, ?, ?)
                         ''', (show_name, profile_id, name, base_url,
-                              uploader, quality))
+                              uploader, quality, color))
 
                 print(f"Cached {len(shows_seen)} shows from {name}")
 
@@ -326,7 +346,13 @@ def update_cached_shows():
             profiles = c.fetchall()
 
             for profile in profiles:
-                profile_id, name, base_url, uploader, quality, _ = profile
+                # Handle both old and new schema
+                if len(profile) >= 7:
+                    profile_id, name, base_url, uploader, quality, color, _ = profile
+                else:
+                    profile_id, name, base_url, uploader, quality, _ = profile
+                    color = '#88c0d0'
+                    
                 feed_url = build_feed_url(base_url, uploader, quality)
 
                 try:
@@ -341,10 +367,10 @@ def update_cached_shows():
                             c.execute('''
                                 INSERT INTO cached_shows
                                 (show_name, profile_id, profile_name,
-                                 base_url, uploader, quality)
-                                VALUES (?, ?, ?, ?, ?, ?)
+                                 base_url, uploader, quality, color)
+                                VALUES (?, ?, ?, ?, ?, ?, ?)
                             ''', (show_name, profile_id, name, base_url,
-                                  uploader, quality))
+                                  uploader, quality, color))
 
                     print(f"Cached {len(shows_seen)} shows from {name}")
 
@@ -440,7 +466,12 @@ def check_single_show(tracked_show_id):
 
 def cache_single_profile(profile):
     """Cache shows from a single profile immediately."""
-    profile_id, name, base_url, uploader, quality = profile
+    if len(profile) >= 6:
+        profile_id, name, base_url, uploader, quality, color = profile
+    else:
+        profile_id, name, base_url, uploader, quality = profile
+        color = '#88c0d0'
+        
     feed_url = build_feed_url(base_url, uploader, quality)
     
     try:
@@ -459,10 +490,10 @@ def cache_single_profile(profile):
                 c.execute('''
                     INSERT INTO cached_shows
                     (show_name, profile_id, profile_name,
-                     base_url, uploader, quality)
-                    VALUES (?, ?, ?, ?, ?, ?)
+                     base_url, uploader, quality, color)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
                 ''', (show_name, profile_id, name, base_url,
-                      uploader, quality))
+                      uploader, quality, color))
         
         conn.commit()
         conn.close()
@@ -494,34 +525,49 @@ def manage_profiles():
         c.execute('SELECT * FROM feed_profiles ORDER BY created_at DESC')
         profiles = []
         for row in c.fetchall():
-            profiles.append({
-                'id': row[0],
-                'name': row[1],
-                'base_url': row[2],
-                'uploader': row[3],
-                'quality': row[4],
-                'created_at': row[5]
-            })
+            # Handle both old and new schema
+            if len(row) >= 7:
+                profiles.append({
+                    'id': row[0],
+                    'name': row[1],
+                    'base_url': row[2],
+                    'uploader': row[3],
+                    'quality': row[4],
+                    'color': row[5] or '#88c0d0',
+                    'created_at': row[6]
+                })
+            else:
+                profiles.append({
+                    'id': row[0],
+                    'name': row[1],
+                    'base_url': row[2],
+                    'uploader': row[3],
+                    'quality': row[4],
+                    'color': '#88c0d0',
+                    'created_at': row[5]
+                })
         conn.close()
         return jsonify(profiles)
 
     elif request.method == 'POST':
         data = request.json
         c.execute('''
-            INSERT INTO feed_profiles (name, base_url, uploader, quality)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO feed_profiles (name, base_url, uploader, quality, color)
+            VALUES (?, ?, ?, ?, ?)
         ''', (
             data['name'],
             data['base_url'],
             data.get('uploader'),
-            data.get('quality')
+            data.get('quality'),
+            data.get('color', '#88c0d0')
         ))
         conn.commit()
         profile_id = c.lastrowid
         
         # Get the profile details
         profile = (profile_id, data['name'], data['base_url'],
-                   data.get('uploader'), data.get('quality'))
+                   data.get('uploader'), data.get('quality'),
+                   data.get('color', '#88c0d0'))
         
         conn.close()
         
@@ -569,8 +615,14 @@ def get_shows():
     # Group by show name
     shows_dict = {}
     for row in cached:
-        (_, show_name, profile_id, profile_name,
-         base_url, uploader, quality, _) = row
+        # Handle both old and new schema
+        if len(row) >= 9:
+            (_, show_name, profile_id, profile_name,
+             base_url, uploader, quality, color, _) = row
+        else:
+            (_, show_name, profile_id, profile_name,
+             base_url, uploader, quality, _) = row
+            color = '#88c0d0'
 
         if show_name not in shows_dict:
             shows_dict[show_name] = []
@@ -580,7 +632,8 @@ def get_shows():
             'profile_name': profile_name,
             'base_url': base_url,
             'uploader': uploader,
-            'quality': quality
+            'quality': quality,
+            'color': color
         })
 
     shows = []
@@ -603,24 +656,40 @@ def manage_tracked_shows():
 
     if request.method == 'GET':
         c.execute('''
-            SELECT ts.*, fp.name, fp.base_url, fp.uploader, fp.quality
+            SELECT ts.*, fp.name, fp.base_url, fp.uploader, fp.quality, fp.color
             FROM tracked_shows ts
             LEFT JOIN feed_profiles fp ON ts.profile_id = fp.id
             ORDER BY ts.added_at DESC
         ''')
         tracked = []
         for row in c.fetchall():
-            tracked.append({
-                'id': row[0],
-                'show_name': row[1],
-                'feed_url': row[2],
-                'profile_id': row[3],
-                'added_at': row[4],
-                'profile_name': row[5],
-                'base_url': row[6],
-                'uploader': row[7],
-                'quality': row[8]
-            })
+            # Handle both old and new schema
+            if len(row) >= 10:
+                tracked.append({
+                    'id': row[0],
+                    'show_name': row[1],
+                    'feed_url': row[2],
+                    'profile_id': row[3],
+                    'added_at': row[4],
+                    'profile_name': row[5],
+                    'base_url': row[6],
+                    'uploader': row[7],
+                    'quality': row[8],
+                    'color': row[9] or '#88c0d0'
+                })
+            else:
+                tracked.append({
+                    'id': row[0],
+                    'show_name': row[1],
+                    'feed_url': row[2],
+                    'profile_id': row[3],
+                    'added_at': row[4],
+                    'profile_name': row[5],
+                    'base_url': row[6],
+                    'uploader': row[7],
+                    'quality': row[8],
+                    'color': '#88c0d0'
+                })
         conn.close()
         return jsonify(tracked)
 
@@ -638,7 +707,12 @@ def manage_tracked_shows():
             conn.close()
             return jsonify({'error': 'Profile not found'}), 404
 
-        _, _, base_url, uploader, quality, _ = profile
+        # Handle both old and new schema
+        if len(profile) >= 7:
+            _, _, base_url, uploader, quality, color, _ = profile
+        else:
+            _, _, base_url, uploader, quality, _ = profile
+            
         feed_url = build_feed_url(base_url, uploader, quality, show_name)
 
         c.execute('''

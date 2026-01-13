@@ -11,16 +11,72 @@
     <meta name="darkreader-lock">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Pyget Web</h1>
+    <!-- Top Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-content">
+            <h1 class="navbar-title">Pyget Web</h1>
+            <div class="navbar-tabs">
+                <button class="nav-tab active" data-tab="sources">Sources</button>
+                <button class="nav-tab" data-tab="shows">Shows</button>
+            </div>
             <button id="settings-btn" class="btn btn-icon">
                 <span class="material-icons">settings</span>
             </button>
-        </header>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div class="main-container">
+        <!-- Sources Tab -->
+        <div id="sources-tab" class="tab-content active">
+            <div class="section">
+                <div class="section-header">
+                    <h2>Add New Source</h2>
+                </div>
+                <form id="source-form" class="source-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="source-name">Source Name:</label>
+                            <input type="text" id="source-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="source-color">Color:</label>
+                            <input type="color" id="source-color" value="#88c0d0" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="base-url">Base URL:</label>
+                        <input type="url" id="base-url"
+                               value="https://nyaa.si" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="uploader">Uploader (optional):</label>
+                            <input type="text" id="uploader">
+                        </div>
+                        <div class="form-group">
+                            <label for="quality">Quality (optional):</label>
+                            <input type="text" id="quality"
+                                   placeholder="e.g., 720p, 1080p">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="material-icons">add</span>
+                        Add Source
+                    </button>
+                </form>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <h2>Existing Sources</h2>
+                </div>
+                <div id="sources-list" class="list-container"></div>
+            </div>
+        </div>
 
         <!-- Shows Tab -->
-        <div class="main-content">
+        <div id="shows-tab" class="tab-content">
             <div class="section">
                 <div class="section-header">
                     <h2>My Shows</h2>
@@ -36,101 +92,34 @@
 
     <!-- Settings Modal -->
     <div id="settings-modal" class="modal">
-        <div class="modal-content modal-large">
+        <div class="modal-content">
             <div class="modal-header">
-                <h3>Settings</h3>
+                <h3>Transmission Settings</h3>
                 <span class="close-settings">&times;</span>
             </div>
             <div class="modal-body">
-                <div class="settings-tabs">
-                    <button class="settings-tab-btn active"
-                            data-settings-tab="profiles">
-                        Profiles
+                <form id="transmission-form">
+                    <div class="form-group">
+                        <label for="transmission-host">Host:</label>
+                        <input type="text" id="transmission-host"
+                               placeholder="localhost" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="transmission-port">Port:</label>
+                        <input type="number" id="transmission-port"
+                               placeholder="9091" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        Save Settings
                     </button>
-                    <button class="settings-tab-btn"
-                            data-settings-tab="transmission">
-                        Transmission
-                    </button>
-                </div>
-
-                <!-- Profiles Settings Tab -->
-                <div id="profiles-settings-tab"
-                     class="settings-tab-content active">
-                    <div class="section">
-                        <h3>Add New Profile</h3>
-                        <form id="profile-form">
-                            <div class="form-group">
-                                <label for="profile-name">Profile Name:</label>
-                                <input type="text" id="profile-name" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="base-url">Base URL:</label>
-                                <input type="url" id="base-url"
-                                       value="https://nyaa.si" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="uploader">
-                                    Uploader (optional):
-                                </label>
-                                <input type="text" id="uploader">
-                            </div>
-                            <div class="form-group">
-                                <label for="quality">Quality (optional):</label>
-                                <input type="text" id="quality"
-                                       placeholder="e.g., 720p, 1080p">
-                            </div>
-                            <button type="submit" class="btn btn-primary">
-                                Add Profile
-                            </button>
-                        </form>
-                    </div>
-
-                    <div class="section">
-                        <h3>Existing Profiles</h3>
-                        <div id="profiles-list" class="list-container"></div>
-                    </div>
-                </div>
-
-                <!-- Transmission Settings Tab -->
-                <div id="transmission-settings-tab"
-                     class="settings-tab-content">
-                    <div class="section">
-                        <h3>Transmission Configuration</h3>
-                        <form id="transmission-form">
-                            <div class="form-group">
-                                <label for="transmission-host">Host:</label>
-                                <input type="text" id="transmission-host"
-                                       placeholder="localhost" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="transmission-port">Port:</label>
-                                <input type="number" id="transmission-port"
-                                       placeholder="9091" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary">
-                                Save Settings
-                            </button>
-                        </form>
-                    </div>
-                </div>
+                </form>
             </div>
-        </div>
-    </div>
-
-    <!-- Modal for selecting source -->
-    <div id="source-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modal-title">Select Source</h3>
-                <span class="close">&times;</span>
-            </div>
-            <div id="modal-body" class="modal-body"></div>
         </div>
     </div>
 
     <!-- Modal for adding show -->
     <div id="add-show-modal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content modal-large">
             <div class="modal-header">
                 <h3>Add Show</h3>
                 <span class="close-add">&times;</span>

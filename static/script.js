@@ -1,10 +1,35 @@
 // API base URL
 const API_BASE = 'http://localhost:5000/api';
 
+// Tab navigation
+document.querySelectorAll('.nav-tab').forEach(button => {
+    button.addEventListener('click', () => {
+        const tabName = button.dataset.tab;
+
+        // Update active tab button
+        document.querySelectorAll('.nav-tab').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        button.classList.add('active');
+
+        // Update active tab content
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        document.getElementById(`${tabName}-tab`).classList.add('active');
+
+        // Load data for the tab
+        if (tabName === 'sources') {
+            loadSources();
+        } else if (tabName === 'shows') {
+            loadTrackedShows();
+        }
+    });
+});
+
 // Settings modal
 document.getElementById('settings-btn').addEventListener('click', () => {
     document.getElementById('settings-modal').classList.add('visible');
-    loadProfiles();
     loadTransmissionSettings();
 });
 
@@ -12,34 +37,17 @@ document.querySelector('.close-settings').addEventListener('click', () => {
     document.getElementById('settings-modal').classList.remove('visible');
 });
 
-// Settings tabs
-document.querySelectorAll('.settings-tab-btn').forEach(button => {
-    button.addEventListener('click', () => {
-        const tabName = button.dataset.settingsTab;
-
-        document.querySelectorAll('.settings-tab-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        button.classList.add('active');
-
-        document.querySelectorAll('.settings-tab-content').forEach(content => {
-            content.classList.remove('active');
-        });
-        document.getElementById(`${tabName}-settings-tab`)
-            .classList.add('active');
-    });
-});
-
-// Profile management
-document.getElementById('profile-form')
+// Source management
+document.getElementById('source-form')
     .addEventListener('submit', async (e) => {
         e.preventDefault();
 
         const data = {
-            name: document.getElementById('profile-name').value,
+            name: document.getElementById('source-name').value,
             base_url: document.getElementById('base-url').value,
             uploader: document.getElementById('uploader').value || null,
-            quality: document.getElementById('quality').value || null
+            quality: document.getElementById('quality').value || null,
+            color: document.getElementById('source-color').value
         };
 
         try {
@@ -51,51 +59,56 @@ document.getElementById('profile-form')
 
             if (response.ok) {
                 e.target.reset();
-                loadProfiles();
-                showNotification('Profile added successfully', 'success');
+                document.getElementById('source-color').value = '#88c0d0';
+                loadSources();
+                showNotification('Source added successfully', 'success');
             }
         } catch (error) {
-            showNotification('Error adding profile', 'error');
+            showNotification('Error adding source', 'error');
         }
     });
 
-async function loadProfiles() {
-    const container = document.getElementById('profiles-list');
-    container.innerHTML = '<div class="loading">Loading profiles...</div>';
+async function loadSources() {
+    const container = document.getElementById('sources-list');
+    container.innerHTML = '<div class="loading">Loading sources...</div>';
 
     try {
         const response = await fetch(`${API_BASE}/profiles`);
-        const profiles = await response.json();
+        const sources = await response.json();
 
-        if (profiles.length === 0) {
+        if (sources.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
-                    <p>No profiles yet. Add one above!</p>
+                    <p>No sources yet. Add one above!</p>
                 </div>
             `;
             return;
         }
 
-        container.innerHTML = profiles.map(profile => `
+        container.innerHTML = sources.map(source => `
             <div class="list-item">
                 <div class="list-item-header">
-                    <div class="list-item-title">${profile.name}</div>
-                    <button class="btn btn-danger"
-                            onclick="deleteProfile(${profile.id})">
-                        Delete
+                    <div class="list-item-title-with-badge">
+                        <span class="source-color-indicator" 
+                              style="background-color: ${source.color || '#88c0d0'}"></span>
+                        <span class="list-item-title">${source.name}</span>
+                    </div>
+                    <button class="btn btn-danger btn-small"
+                            onclick="deleteSource(${source.id})">
+                        <span class="material-icons">delete</span>
                     </button>
                 </div>
                 <div class="list-item-meta">
-                    Base URL: ${profile.base_url}
+                    Base URL: ${source.base_url}
                 </div>
-                ${profile.uploader ? `
+                ${source.uploader ? `
                     <div class="list-item-meta">
-                        Uploader: ${profile.uploader}
+                        Uploader: ${source.uploader}
                     </div>
                 ` : ''}
-                ${profile.quality ? `
+                ${source.quality ? `
                     <div class="list-item-meta">
-                        Quality: ${profile.quality}
+                        Quality: ${source.quality}
                     </div>
                 ` : ''}
             </div>
@@ -103,21 +116,21 @@ async function loadProfiles() {
     } catch (error) {
         container.innerHTML = `
             <div class="empty-state">
-                <p>Error loading profiles</p>
+                <p>Error loading sources</p>
             </div>
         `;
     }
 }
 
-async function deleteProfile(id) {
-    if (!confirm('Delete this profile?')) return;
+async function deleteSource(id) {
+    if (!confirm('Delete this source?')) return;
 
     try {
         await fetch(`${API_BASE}/profiles/${id}`, {method: 'DELETE'});
-        loadProfiles();
-        showNotification('Profile deleted', 'success');
+        loadSources();
+        showNotification('Source deleted', 'success');
     } catch (error) {
-        showNotification('Error deleting profile', 'error');
+        showNotification('Error deleting source', 'error');
     }
 }
 
@@ -140,6 +153,7 @@ document.getElementById('transmission-form')
 
             if (response.ok) {
                 showNotification('Transmission settings saved', 'success');
+                document.getElementById('settings-modal').classList.remove('visible');
             }
         } catch (error) {
             showNotification('Error saving settings', 'error');
@@ -199,22 +213,27 @@ async function loadShows(searchQuery = '') {
             container.innerHTML = `
                 <div class="empty-state">
                     <p>${searchQuery ? 'No shows found matching your search' :
-                         'No shows found. Add some feed profiles first!'}</p>
+                         'No shows found. Add some sources first!'}</p>
                 </div>
             `;
             return;
         }
 
         container.innerHTML = shows.map(show => `
-            <div class="list-item show-item"
-                 onclick="showSourceModal('${escapeHtml(show.name)}',
-                          ${JSON.stringify(show.sources)
-                                .replace(/"/g, '&quot;')})">
+            <div class="list-item">
                 <div class="list-item-header">
                     <div class="list-item-title">${show.name}</div>
-                    <div class="list-item-meta">
-                        ${show.sources.length} source(s)
-                    </div>
+                </div>
+                <div class="source-badges">
+                    ${show.sources.map(source => `
+                        <div class="source-badge"
+                             style="background-color: ${source.color || '#88c0d0'}"
+                             onclick="trackShow('${escapeHtml(show.name)}', ${source.profile_id})"
+                             title="${source.profile_name}${source.uploader ? ' - ' + source.uploader : ''}${source.quality ? ' - ' + source.quality : ''}">
+                            <span class="source-badge-name">${source.profile_name}</span>
+                            ${source.quality ? `<span class="source-badge-quality">${source.quality}</span>` : ''}
+                        </div>
+                    `).join('')}
                 </div>
             </div>
         `).join('');
@@ -227,47 +246,11 @@ async function loadShows(searchQuery = '') {
     }
 }
 
-function showSourceModal(showName, sources) {
-    const modal = document.getElementById('source-modal');
-    document.getElementById('modal-title').textContent =
-        `Select Source for: ${showName}`;
-
-    const modalBody = document.getElementById('modal-body');
-    modalBody.innerHTML = sources.map(source => `
-        <div class="list-item"
-             style="cursor: pointer;"
-             onclick="trackShow('${escapeHtml(showName)}',
-                      ${source.profile_id})">
-            <div class="list-item-title">${source.profile_name}</div>
-            ${source.uploader ? `
-                <div class="list-item-meta">
-                    Uploader: ${source.uploader}
-                </div>
-            ` : ''}
-            ${source.quality ? `
-                <div class="list-item-meta">
-                    Quality: ${source.quality}
-                </div>
-            ` : ''}
-        </div>
-    `).join('');
-
-    modal.classList.add('visible');
-}
-
 // Modal close
-document.querySelector('.close').addEventListener('click', () => {
-    document.getElementById('source-modal').classList.remove('visible');
-});
-
 window.addEventListener('click', (e) => {
-    const sourceModal = document.getElementById('source-modal');
     const addModal = document.getElementById('add-show-modal');
     const settingsModal = document.getElementById('settings-modal');
 
-    if (e.target === sourceModal) {
-        sourceModal.classList.remove('visible');
-    }
     if (e.target === addModal) {
         addModal.classList.remove('visible');
     }
@@ -288,12 +271,12 @@ async function trackShow(showName, profileId) {
         });
 
         if (response.ok) {
-            document.getElementById('source-modal')
-                .classList.remove('visible');
             document.getElementById('add-show-modal')
                 .classList.remove('visible');
             showNotification('Show tracked successfully', 'success');
-            loadTrackedShows();
+            
+            // Switch to shows tab and reload
+            document.querySelector('.nav-tab[data-tab="shows"]').click();
         }
     } catch (error) {
         showNotification('Error tracking show', 'error');
@@ -325,7 +308,8 @@ async function loadTrackedShows() {
                         title="Remove show">
                     <span class="material-icons">delete</span>
                 </button>
-                <div class="show-card-badge">
+                <div class="show-card-badge"
+                     style="background-color: ${show.color || '#88c0d0'}">
                     ${show.profile_name}
                 </div>
                 <div class="show-card-image">
@@ -369,19 +353,9 @@ function escapeHtml(text) {
     return text.replace(/[&<>"']/g, m => map[m]);
 }
 
-function formatBytes(bytes) {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-}
-
 function showNotification(message, type) {
-    // Simple console notification
-    // Could be enhanced with a toast/snackbar UI component
     console.log(`[${type.toUpperCase()}] ${message}`);
 }
 
 // Initial load
-loadTrackedShows();
+loadSources();
