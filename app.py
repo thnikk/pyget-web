@@ -779,7 +779,12 @@ def delete_tracked_show(tracked_id):
     c = conn.cursor()
 
     if request.method == 'DELETE':
+        # First, delete associated downloaded torrents
+        c.execute('DELETE FROM downloaded_torrents WHERE tracked_show_id = ?', (tracked_id,))
+        
+        # Then, delete the show itself
         c.execute('DELETE FROM tracked_shows WHERE id = ?', (tracked_id,))
+        
         conn.commit()
         conn.close()
         return jsonify({'status': 'removed'})
