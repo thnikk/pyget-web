@@ -207,6 +207,13 @@ body {
 }
 
 /* Buttons */
+
+.button-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 .btn {
     padding: 10px 20px;
     border: none;

@@ -356,6 +356,12 @@ function openEditShowModal(show) {
     document.getElementById('edit-show-name').value = show.show_name;
     document.getElementById('edit-show-season').value = show.season_name || '';
     document.getElementById('edit-show-max-age').value = show.max_age || '';
+
+    // Set the onclick for the untrack button
+    document.getElementById('untrack-show-btn').onclick = () => {
+        untrackShow(show.id);
+        modal.classList.remove('visible'); // Close modal after untracking
+    };
 }
 
 document.getElementById('edit-show-form').addEventListener('submit', async (e) => {
@@ -452,11 +458,6 @@ async function loadTrackedShows() {
 
         content += tracked.map(show => `
             <div class="show-card" onclick='openEditShowModal(${JSON.stringify(show)})'>
-                <button class="show-card-remove"
-                        onclick="event.stopPropagation(); untrackShow(${show.id})"
-                        title="Remove show">
-                    <span class="material-icons">delete</span>
-                </button>
                 <div class="show-card-badge"
                      style="background-color: ${show.color || '#88c0d0'}">
                     ${show.profile_name}
