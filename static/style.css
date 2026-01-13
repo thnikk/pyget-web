@@ -234,7 +234,8 @@ body {
 }
 
 .btn-icon {
-    background: rgba(255, 255, 255, 0.1);
+    /* background: rgba(255, 255, 255, 0.1); */
+    background: none;
     border: none;
     border-radius: 50%;
     width: 48px;
@@ -300,6 +301,10 @@ body {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
+}
+
+.grid-wide {
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)) !important;
 }
 
 .source-card {
@@ -590,7 +595,8 @@ body {
 .close, .close-add, .close-settings, .close-edit {
     width: 40px;
     height: 40px;
-    background: var(--nord3);
+    /* background: var(--nord3); */
+    background: none;
     border-radius: 50%;
     display: flex;
     align-items: center;
