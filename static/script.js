@@ -241,17 +241,21 @@ document.getElementById('transmission-form')
 
 
 
+function resetAddShowModal() {
+    document.getElementById('add-show-modal').classList.remove('visible');
+    document.getElementById('show-search').value = '';
+    document.getElementById('add-show-page-2').style.display = 'none';
+    document.getElementById('add-show-page-1').style.display = 'block';
+    document.getElementById('shows-list').innerHTML = '';
+}
+
 function openAddShowModal() {
     document.getElementById('add-show-modal').classList.add('visible');
     loadShows();
 }
 
 document.querySelector('.close-add').addEventListener('click', () => {
-    document.getElementById('add-show-modal').classList.remove('visible');
-    document.getElementById('show-search').value = ''; // Clear search bar
-    document.getElementById('add-show-page-2').style.display = 'none'; // Ensure page 2 is hidden
-    document.getElementById('add-show-page-1').style.display = 'block'; // Show page 1
-    document.getElementById('shows-list').innerHTML = ''; // Clear show list
+    resetAddShowModal();
 });
 
 // Search functionality
@@ -365,7 +369,7 @@ document.getElementById('add-show-details-form').addEventListener('submit', asyn
         });
 
         if (response.ok) {
-            document.getElementById('add-show-modal').classList.remove('visible');
+            resetAddShowModal();
             showNotification('Show tracked successfully', 'success');
             
             // Switch to shows tab and reload
