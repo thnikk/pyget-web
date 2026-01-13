@@ -248,6 +248,10 @@ function openAddShowModal() {
 
 document.querySelector('.close-add').addEventListener('click', () => {
     document.getElementById('add-show-modal').classList.remove('visible');
+    document.getElementById('show-search').value = ''; // Clear search bar
+    document.getElementById('add-show-page-2').style.display = 'none'; // Ensure page 2 is hidden
+    document.getElementById('add-show-page-1').style.display = 'block'; // Show page 1
+    document.getElementById('shows-list').innerHTML = ''; // Clear show list
 });
 
 // Search functionality
@@ -412,27 +416,6 @@ document.getElementById('edit-show-form').addEventListener('submit', async (e) =
         }
     } catch (error) {
         showNotification('Error updating show', 'error');
-    }
-});
-
-// Modal close
-window.addEventListener('click', (e) => {
-    const addModal = document.getElementById('add-show-modal');
-    const settingsModal = document.getElementById('settings-modal');
-    const sourceModal = document.getElementById('source-modal');
-    const editShowModal = document.getElementById('edit-show-modal');
-
-    if (e.target === addModal) {
-        addModal.classList.remove('visible');
-    }
-    if (e.target === settingsModal) {
-        settingsModal.classList.remove('visible');
-    }
-    if (e.target === sourceModal) {
-        sourceModal.classList.remove('visible');
-    }
-    if (e.target === editShowModal) {
-        editShowModal.classList.remove('visible');
     }
 });
 
