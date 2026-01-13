@@ -244,6 +244,7 @@ document.getElementById('transmission-form')
 function resetAddShowModal() {
     document.getElementById('add-show-modal').classList.remove('visible');
     document.getElementById('show-search').value = '';
+    document.getElementById('clear-search-btn').style.display = 'none';
     document.getElementById('add-show-page-2').style.display = 'none';
     document.getElementById('add-show-page-1').style.display = 'block';
     document.getElementById('shows-list').innerHTML = '';
@@ -262,11 +263,21 @@ document.querySelector('.close-add').addEventListener('click', () => {
 let searchTimeout;
 document.getElementById('show-search')
     .addEventListener('input', (e) => {
+        const clearBtn = document.getElementById('clear-search-btn');
+        clearBtn.style.display = e.target.value ? 'block' : 'none';
+
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
             loadShows(e.target.value);
         }, 300);
     });
+
+document.getElementById('clear-search-btn').addEventListener('click', () => {
+    const input = document.getElementById('show-search');
+    input.value = '';
+    document.getElementById('clear-search-btn').style.display = 'none';
+    loadShows('');
+});
 
 // Shows management
 async function loadShows(searchQuery = '') {

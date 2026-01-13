@@ -151,9 +151,13 @@
             </div>
             <div class="modal-body">
                 <div id="add-show-page-1">
-                    <div class="search-container" style="margin-bottom: 20px;">
+                    <div class="search-container" style="margin-bottom: 20px; position: relative;">
                         <input type="text" id="show-search"
-                               placeholder="Search available shows...">
+                               placeholder="Search available shows..." style="padding-right: 30px;">
+                        <span id="clear-search-btn" class="material-icons"
+                              style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); cursor: pointer; display: none; color: #d8dee9;">
+                            close
+                        </span>
                     </div>
                     <div id="shows-list" class="list-container"
                          style="max-height: 400px; overflow-y: auto;">
