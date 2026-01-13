@@ -8,6 +8,7 @@ import re
 import sqlite3
 import threading
 import time
+from datetime import datetime, timedelta
 from typing import Optional
 from urllib.parse import urlencode
 
@@ -282,6 +283,13 @@ def check_and_download_torrents():
                     feed = feedparser.parse(feed_url)
 
                     for entry in feed.entries:
+                        # Check max_age
+                        if max_age and hasattr(entry, 'published_parsed'):
+                            published_date = datetime.fromtimestamp(
+                                time.mktime(entry.published_parsed))
+                            if datetime.now() - published_date > timedelta(days=max_age):
+                                continue
+
                         torrent_url = None
 
                         # Find torrent link
@@ -428,6 +436,13 @@ def check_single_show(tracked_show_id):
         feed = feedparser.parse(feed_url)
 
         for entry in feed.entries:
+            # Check max_age
+            if max_age and hasattr(entry, 'published_parsed'):
+                published_date = datetime.fromtimestamp(
+                    time.mktime(entry.published_parsed))
+                if datetime.now() - published_date > timedelta(days=max_age):
+                    continue
+
             torrent_url = None
 
             if hasattr(entry, 'links'):
