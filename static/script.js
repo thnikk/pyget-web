@@ -139,22 +139,12 @@ async function loadSources() {
         `;
 
         content += sources.map(source => `
-            <div class="source-card">
+            <div class="source-card" onclick='openSourceModal(${JSON.stringify(source)})'>
                 <div class="source-card-header">
                     <div class="source-card-title-with-badge">
                         <span class="source-color-indicator" 
                               style="background-color: ${source.color || '#88c0d0'}"></span>
                         <span class="source-card-title">${source.name}</span>
-                    </div>
-                    <div class="source-card-actions">
-                        <button class="btn btn-secondary btn-small"
-                                onclick='openSourceModal(${JSON.stringify(source)})'>
-                            <span class="material-icons">edit</span>
-                        </button>
-                        <button class="btn btn-danger btn-small"
-                                onclick="deleteSource(${source.id})">
-                            <span class="material-icons">delete</span>
-                        </button>
                     </div>
                 </div>
                 <div class="source-card-meta">
@@ -185,7 +175,8 @@ async function loadSources() {
 function openSourceModal(source = null) {
     const modal = document.getElementById('source-modal');
     const modalTitle = document.getElementById('source-modal-title');
-    
+    const deleteBtn = document.getElementById('delete-source-btn');
+
     if (source) {
         modalTitle.textContent = 'Edit Source';
         document.getElementById('source-id').value = source.id;
@@ -194,10 +185,16 @@ function openSourceModal(source = null) {
         document.getElementById('base-url').value = source.base_url;
         document.getElementById('uploader').value = source.uploader || '';
         document.getElementById('quality').value = source.quality || '';
+        deleteBtn.style.display = 'block';
+        deleteBtn.onclick = () => {
+            deleteSource(source.id);
+            modal.classList.remove('visible');
+        };
     } else {
         modalTitle.textContent = 'Add Source';
         document.getElementById('source-form').reset();
         document.getElementById('source-color').value = '#88c0d0';
+        deleteBtn.style.display = 'none';
     }
 
     modal.classList.add('visible');
