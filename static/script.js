@@ -93,10 +93,16 @@ async function loadSources() {
                               style="background-color: ${source.color || '#88c0d0'}"></span>
                         <span class="list-item-title">${source.name}</span>
                     </div>
-                    <button class="btn btn-danger btn-small"
-                            onclick="deleteSource(${source.id})">
-                        <span class="material-icons">delete</span>
-                    </button>
+                    <div class="list-item-actions">
+                        <button class="btn btn-secondary btn-small"
+                                onclick='editSource(${JSON.stringify(source)})'>
+                            <span class="material-icons">edit</span>
+                        </button>
+                        <button class="btn btn-danger btn-small"
+                                onclick="deleteSource(${source.id})">
+                            <span class="material-icons">delete</span>
+                        </button>
+                    </div>
                 </div>
                 <div class="list-item-meta">
                     Base URL: ${source.base_url}
@@ -246,10 +252,53 @@ async function loadShows(searchQuery = '') {
     }
 }
 
+async function editSource(source) {
+    const modal = document.getElementById('edit-source-modal');
+    modal.classList.add('visible');
+
+    document.getElementById('edit-source-id').value = source.id;
+    document.getElementById('edit-source-name').value = source.name;
+    document.getElementById('edit-source-color').value = source.color;
+    document.getElementById('edit-base-url').value = source.base_url;
+    document.getElementById('edit-uploader').value = source.uploader || '';
+    document.getElementById('edit-quality').value = source.quality || '';
+}
+
+document.getElementById('edit-source-form')
+    .addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const sourceId = document.getElementById('edit-source-id').value;
+        const data = {
+            name: document.getElementById('edit-source-name').value,
+            base_url: document.getElementById('edit-base-url').value,
+            uploader: document.getElementById('edit-uploader').value || null,
+            quality: document.getElementById('edit-quality').value || null,
+            color: document.getElementById('edit-source-color').value
+        };
+
+        try {
+            const response = await fetch(`${API_BASE}/profiles/${sourceId}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                document.getElementById('edit-source-modal').classList.remove('visible');
+                loadSources();
+                showNotification('Source updated successfully', 'success');
+            }
+        } catch (error) {
+            showNotification('Error updating source', 'error');
+        }
+    });
+
 // Modal close
 window.addEventListener('click', (e) => {
     const addModal = document.getElementById('add-show-modal');
     const settingsModal = document.getElementById('settings-modal');
+    const editSourceModal = document.getElementById('edit-source-modal');
 
     if (e.target === addModal) {
         addModal.classList.remove('visible');
@@ -257,6 +306,13 @@ window.addEventListener('click', (e) => {
     if (e.target === settingsModal) {
         settingsModal.classList.remove('visible');
     }
+    if (e.target === editSourceModal) {
+        editSourceModal.classList.remove('visible');
+    }
+});
+
+document.querySelector('.close-edit').addEventListener('click', () => {
+    document.getElementById('edit-source-modal').classList.remove('visible');
 });
 
 async function trackShow(showName, profileId) {

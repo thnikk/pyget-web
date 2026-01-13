@@ -505,6 +505,50 @@ def serve_static(path):
     return send_from_directory('static', path)
 
 
+@app.route('/api/profiles/<int:profile_id>', methods=['DELETE', 'PUT'])
+def manage_profile_id(profile_id):
+    """Delete or update a feed profile."""
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+
+    if request.method == 'DELETE':
+        c.execute('DELETE FROM feed_profiles WHERE id = ?', (profile_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({'status': 'deleted'})
+    
+    elif request.method == 'PUT':
+        data = request.json
+        c.execute('''
+            UPDATE feed_profiles
+            SET name = ?, base_url = ?, uploader = ?, quality = ?, color = ?
+            WHERE id = ?
+        ''', (
+            data['name'],
+            data['base_url'],
+            data.get('uploader'),
+            data.get('quality'),
+            data.get('color', '#88c0d0'),
+            profile_id
+        ))
+        conn.commit()
+
+        # Get the updated profile details for caching
+        profile = (profile_id, data['name'], data['base_url'],
+                   data.get('uploader'), data.get('quality'),
+                   data.get('color', '#88c0d0'))
+
+        conn.close()
+
+        # Immediately update cache for this profile
+        threading.Thread(
+            target=cache_single_profile,
+            args=(profile,),
+            daemon=True
+        ).start()
+        
+        return jsonify({'id': profile_id, 'status': 'updated'}), 200
+
 @app.route('/api/profiles', methods=['GET', 'POST'])
 def manage_profiles():
     """Get all profiles or create a new profile."""
@@ -558,17 +602,6 @@ def manage_profiles():
         ).start()
         
         return jsonify({'id': profile_id, 'status': 'created'}), 201
-
-
-@app.route('/api/profiles/<int:profile_id>', methods=['DELETE'])
-def delete_profile(profile_id):
-    """Delete a feed profile."""
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute('DELETE FROM feed_profiles WHERE id = ?', (profile_id,))
-    conn.commit()
-    conn.close()
-    return jsonify({'status': 'deleted'})
 
 
 @app.route('/api/shows', methods=['GET'])

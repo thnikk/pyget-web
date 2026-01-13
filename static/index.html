@@ -90,6 +90,50 @@
         </div>
     </div>
 
+    <!-- Modal for editing source -->
+    <div id="edit-source-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3>Edit Source</h3>
+                <span class="close-edit">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="edit-source-form" class="source-form">
+                    <input type="hidden" id="edit-source-id">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-source-name">Source Name:</label>
+                            <input type="text" id="edit-source-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-source-color">Color:</label>
+                            <input type="color" id="edit-source-color" value="#88c0d0" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-base-url">Base URL:</label>
+                        <input type="url" id="edit-base-url" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-uploader">Uploader (optional):</label>
+                            <input type="text" id="edit-uploader">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-quality">Quality (optional):</label>
+                            <input type="text" id="edit-quality"
+                                   placeholder="e.g., 720p, 1080p">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="material-icons">save</span>
+                        Save Changes
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Settings Modal -->
     <div id="settings-modal" class="modal">
         <div class="modal-content">

@@ -287,6 +287,15 @@ body {
     transform: translateY(-2px);
 }
 
+.btn-secondary {
+    background: var(--nord9);
+    color: var(--nord0);
+}
+
+.btn-secondary:hover {
+    filter: brightness(1.2);
+    transform: translateY(-1px);
+}
 /* Lists */
 .list-container {
     display: flex;
@@ -339,6 +348,12 @@ body {
     font-size: 0.9rem;
     margin-bottom: 5px;
 }
+
+.list-item-actions {
+    display: flex;
+    gap: 8px;
+}
+
 
 /* Source badges container */
 .source-badges {
@@ -523,7 +538,7 @@ body {
     color: var(--nord6);
 }
 
-.close, .close-add, .close-settings {
+.close, .close-add, .close-settings, .close-edit {
     width: 40px;
     height: 40px;
     background: var(--nord3);
