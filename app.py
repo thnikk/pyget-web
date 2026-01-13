@@ -274,7 +274,7 @@ def check_and_download_torrents():
                 continue
 
             for show in tracked_shows:
-                show_id, show_name, feed_url, profile_id, season_name, _, _ = show
+                show_id, show_name, feed_url, profile_id, added_at, season_name, max_age = show
                 download_path = os.path.join(download_dir, show_name, season_name) if season_name else os.path.join(download_dir, show_name)
 
                 try:
@@ -415,7 +415,7 @@ def check_single_show(tracked_show_id):
             conn.close()
             return
 
-        show_id, show_name, feed_url, profile_id, season_name, _, _ = show
+        show_id, show_name, feed_url, profile_id, added_at, season_name, max_age = show
 
         tc, download_dir = get_transmission_client()
         if not tc:
