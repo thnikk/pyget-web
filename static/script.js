@@ -38,35 +38,39 @@ document.querySelector('.close-settings').addEventListener('click', () => {
 });
 
 // Source management
-document.getElementById('source-form')
-    .addEventListener('submit', async (e) => {
-        e.preventDefault();
+document.getElementById('source-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-        const data = {
-            name: document.getElementById('source-name').value,
-            base_url: document.getElementById('base-url').value,
-            uploader: document.getElementById('uploader').value || null,
-            quality: document.getElementById('quality').value || null,
-            color: document.getElementById('source-color').value
-        };
+    const sourceId = document.getElementById('source-id').value;
+    const isEdit = !!sourceId;
 
-        try {
-            const response = await fetch(`${API_BASE}/profiles`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
-            });
+    const data = {
+        name: document.getElementById('source-name').value,
+        base_url: document.getElementById('base-url').value,
+        uploader: document.getElementById('uploader').value || null,
+        quality: document.getElementById('quality').value || null,
+        color: document.getElementById('source-color').value,
+    };
 
-            if (response.ok) {
-                e.target.reset();
-                document.getElementById('source-color').value = '#88c0d0';
-                loadSources();
-                showNotification('Source added successfully', 'success');
-            }
-        } catch (error) {
-            showNotification('Error adding source', 'error');
+    try {
+        const url = isEdit ? `${API_BASE}/profiles/${sourceId}` : `${API_BASE}/profiles`;
+        const method = isEdit ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+
+        if (response.ok) {
+            document.getElementById('source-modal').classList.remove('visible');
+            loadSources();
+            showNotification(`Source ${isEdit ? 'updated' : 'added'} successfully`, 'success');
         }
-    });
+    } catch (error) {
+        showNotification(`Error ${isEdit ? 'updating' : 'adding'} source`, 'error');
+    }
+});
 
 async function loadSources() {
     const container = document.getElementById('sources-list');
@@ -76,26 +80,23 @@ async function loadSources() {
         const response = await fetch(`${API_BASE}/profiles`);
         const sources = await response.json();
 
-        if (sources.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <p>No sources yet. Add one above!</p>
-                </div>
-            `;
-            return;
-        }
+        let content = `
+            <div class="add-source-card" onclick="openSourceModal()">
+                <span class="material-icons">add</span>
+            </div>
+        `;
 
-        container.innerHTML = sources.map(source => `
-            <div class="list-item">
-                <div class="list-item-header">
-                    <div class="list-item-title-with-badge">
+        content += sources.map(source => `
+            <div class="source-card">
+                <div class="source-card-header">
+                    <div class="source-card-title-with-badge">
                         <span class="source-color-indicator" 
                               style="background-color: ${source.color || '#88c0d0'}"></span>
-                        <span class="list-item-title">${source.name}</span>
+                        <span class="source-card-title">${source.name}</span>
                     </div>
-                    <div class="list-item-actions">
+                    <div class="source-card-actions">
                         <button class="btn btn-secondary btn-small"
-                                onclick='editSource(${JSON.stringify(source)})'>
+                                onclick='openSourceModal(${JSON.stringify(source)})'>
                             <span class="material-icons">edit</span>
                         </button>
                         <button class="btn btn-danger btn-small"
@@ -104,21 +105,22 @@ async function loadSources() {
                         </button>
                     </div>
                 </div>
-                <div class="list-item-meta">
+                <div class="source-card-meta">
                     Base URL: ${source.base_url}
                 </div>
                 ${source.uploader ? `
-                    <div class="list-item-meta">
+                    <div class="source-card-meta">
                         Uploader: ${source.uploader}
                     </div>
                 ` : ''}
                 ${source.quality ? `
-                    <div class="list-item-meta">
+                    <div class="source-card-meta">
                         Quality: ${source.quality}
                     </div>
                 ` : ''}
             </div>
         `).join('');
+        container.innerHTML = content;
     } catch (error) {
         container.innerHTML = `
             <div class="empty-state">
@@ -127,6 +129,28 @@ async function loadSources() {
         `;
     }
 }
+
+function openSourceModal(source = null) {
+    const modal = document.getElementById('source-modal');
+    const modalTitle = document.getElementById('source-modal-title');
+    
+    if (source) {
+        modalTitle.textContent = 'Edit Source';
+        document.getElementById('source-id').value = source.id;
+        document.getElementById('source-name').value = source.name;
+        document.getElementById('source-color').value = source.color;
+        document.getElementById('base-url').value = source.base_url;
+        document.getElementById('uploader').value = source.uploader || '';
+        document.getElementById('quality').value = source.quality || '';
+    } else {
+        modalTitle.textContent = 'Add Source';
+        document.getElementById('source-form').reset();
+        document.getElementById('source-color').value = '#88c0d0';
+    }
+
+    modal.classList.add('visible');
+}
+
 
 async function deleteSource(id) {
     if (!confirm('Delete this source?')) return;
@@ -180,12 +204,10 @@ async function loadTransmissionSettings() {
     }
 }
 
-// Add show modal
-document.getElementById('add-show-btn')
-    .addEventListener('click', () => {
-        document.getElementById('add-show-modal').classList.add('visible');
-        loadShows();
-    });
+function openAddShowModal() {
+    document.getElementById('add-show-modal').classList.add('visible');
+    loadShows();
+}
 
 document.querySelector('.close-add').addEventListener('click', () => {
     document.getElementById('add-show-modal').classList.remove('visible');
@@ -226,9 +248,9 @@ async function loadShows(searchQuery = '') {
         }
 
         container.innerHTML = shows.map(show => `
-            <div class="list-item">
-                <div class="list-item-header">
-                    <div class="list-item-title">${show.name}</div>
+            <div class="add-show-modal-item">
+                <div class="add-show-modal-item-header">
+                    ${show.name}
                 </div>
                 <div class="source-badges">
                     ${show.sources.map(source => `
@@ -252,53 +274,11 @@ async function loadShows(searchQuery = '') {
     }
 }
 
-async function editSource(source) {
-    const modal = document.getElementById('edit-source-modal');
-    modal.classList.add('visible');
-
-    document.getElementById('edit-source-id').value = source.id;
-    document.getElementById('edit-source-name').value = source.name;
-    document.getElementById('edit-source-color').value = source.color;
-    document.getElementById('edit-base-url').value = source.base_url;
-    document.getElementById('edit-uploader').value = source.uploader || '';
-    document.getElementById('edit-quality').value = source.quality || '';
-}
-
-document.getElementById('edit-source-form')
-    .addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        const sourceId = document.getElementById('edit-source-id').value;
-        const data = {
-            name: document.getElementById('edit-source-name').value,
-            base_url: document.getElementById('edit-base-url').value,
-            uploader: document.getElementById('edit-uploader').value || null,
-            quality: document.getElementById('edit-quality').value || null,
-            color: document.getElementById('edit-source-color').value
-        };
-
-        try {
-            const response = await fetch(`${API_BASE}/profiles/${sourceId}`, {
-                method: 'PUT',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
-            });
-
-            if (response.ok) {
-                document.getElementById('edit-source-modal').classList.remove('visible');
-                loadSources();
-                showNotification('Source updated successfully', 'success');
-            }
-        } catch (error) {
-            showNotification('Error updating source', 'error');
-        }
-    });
-
 // Modal close
 window.addEventListener('click', (e) => {
     const addModal = document.getElementById('add-show-modal');
     const settingsModal = document.getElementById('settings-modal');
-    const editSourceModal = document.getElementById('edit-source-modal');
+    const sourceModal = document.getElementById('source-modal');
 
     if (e.target === addModal) {
         addModal.classList.remove('visible');
@@ -306,13 +286,13 @@ window.addEventListener('click', (e) => {
     if (e.target === settingsModal) {
         settingsModal.classList.remove('visible');
     }
-    if (e.target === editSourceModal) {
-        editSourceModal.classList.remove('visible');
+    if (e.target === sourceModal) {
+        sourceModal.classList.remove('visible');
     }
 });
 
 document.querySelector('.close-edit').addEventListener('click', () => {
-    document.getElementById('edit-source-modal').classList.remove('visible');
+    document.getElementById('source-modal').classList.remove('visible');
 });
 
 async function trackShow(showName, profileId) {
@@ -348,8 +328,14 @@ async function loadTrackedShows() {
         const response = await fetch(`${API_BASE}/tracked`);
         const tracked = await response.json();
 
+        let content = `
+            <div class="add-show-card" onclick="openAddShowModal()">
+                <span class="material-icons">add</span>
+            </div>
+        `;
+
         if (tracked.length === 0) {
-            container.innerHTML = `
+            container.innerHTML = content + `
                 <div class="empty-state">
                     <p>No tracked shows yet. Click + Add Show to get started!</p>
                 </div>
@@ -357,7 +343,7 @@ async function loadTrackedShows() {
             return;
         }
 
-        container.innerHTML = tracked.map(show => `
+        content += tracked.map(show => `
             <div class="show-card">
                 <button class="show-card-remove"
                         onclick="untrackShow(${show.id})"
@@ -376,6 +362,7 @@ async function loadTrackedShows() {
                 </div>
             </div>
         `).join('');
+        container.innerHTML = content;
     } catch (error) {
         container.innerHTML = `
             <div class="empty-state">

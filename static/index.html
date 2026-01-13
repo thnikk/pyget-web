@@ -31,9 +31,33 @@
         <div id="sources-tab" class="tab-content active">
             <div class="section">
                 <div class="section-header">
-                    <h2>Add New Source</h2>
+                    <h2>Sources</h2>
                 </div>
+                <div id="sources-list" class="grid-container"></div>
+            </div>
+        </div>
+
+        <!-- Shows Tab -->
+        <div id="shows-tab" class="tab-content">
+            <div class="section">
+                <div class="section-header">
+                    <h2>My Shows</h2>
+                </div>
+                <div id="tracked-list" class="grid-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for adding/editing source -->
+    <div id="source-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 id="source-modal-title">Source</h3>
+                <span class="close-edit">&times;</span>
+            </div>
+            <div class="modal-body">
                 <form id="source-form" class="source-form">
+                    <input type="hidden" id="source-id">
                     <div class="form-row">
                         <div class="form-group">
                             <label for="source-name">Source Name:</label>
@@ -46,8 +70,7 @@
                     </div>
                     <div class="form-group">
                         <label for="base-url">Base URL:</label>
-                        <input type="url" id="base-url"
-                               value="https://nyaa.si" required>
+                        <input type="url" id="base-url" required>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
@@ -61,73 +84,8 @@
                         </div>
                     </div>
                     <button type="submit" class="btn btn-primary">
-                        <span class="material-icons">add</span>
-                        Add Source
-                    </button>
-                </form>
-            </div>
-
-            <div class="section">
-                <div class="section-header">
-                    <h2>Existing Sources</h2>
-                </div>
-                <div id="sources-list" class="list-container"></div>
-            </div>
-        </div>
-
-        <!-- Shows Tab -->
-        <div id="shows-tab" class="tab-content">
-            <div class="section">
-                <div class="section-header">
-                    <h2>My Shows</h2>
-                    <button id="add-show-btn" class="btn btn-success">
-                        <span class="material-icons">add</span>
-                        Add Show
-                    </button>
-                </div>
-                <div id="tracked-list" class="grid-container"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal for editing source -->
-    <div id="edit-source-modal" class="modal">
-        <div class="modal-content modal-large">
-            <div class="modal-header">
-                <h3>Edit Source</h3>
-                <span class="close-edit">&times;</span>
-            </div>
-            <div class="modal-body">
-                <form id="edit-source-form" class="source-form">
-                    <input type="hidden" id="edit-source-id">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="edit-source-name">Source Name:</label>
-                            <input type="text" id="edit-source-name" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="edit-source-color">Color:</label>
-                            <input type="color" id="edit-source-color" value="#88c0d0" required>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-base-url">Base URL:</label>
-                        <input type="url" id="edit-base-url" required>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="edit-uploader">Uploader (optional):</label>
-                            <input type="text" id="edit-uploader">
-                        </div>
-                        <div class="form-group">
-                            <label for="edit-quality">Quality (optional):</label>
-                            <input type="text" id="edit-quality"
-                                   placeholder="e.g., 720p, 1080p">
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary">
                         <span class="material-icons">save</span>
-                        Save Changes
+                        Save
                     </button>
                 </form>
             </div>
