@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pyget Web</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+          rel="stylesheet">
+    <meta name="color-scheme" content="only light">
+    <meta name="darkreader-lock">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Pyget Web</h1>
+            <button id="settings-btn" class="btn btn-icon">
+                <span class="material-icons">settings</span>
+            </button>
+        </header>
+
+        <!-- Shows Tab -->
+        <div class="main-content">
+            <div class="section">
+                <div class="section-header">
+                    <h2>My Shows</h2>
+                    <button id="add-show-btn" class="btn btn-success">
+                        <span class="material-icons">add</span>
+                        Add Show
+                    </button>
+                </div>
+                <div id="tracked-list" class="grid-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3>Settings</h3>
+                <span class="close-settings">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="settings-tabs">
+                    <button class="settings-tab-btn active"
+                            data-settings-tab="profiles">
+                        Profiles
+                    </button>
+                    <button class="settings-tab-btn"
+                            data-settings-tab="transmission">
+                        Transmission
+                    </button>
+                </div>
+
+                <!-- Profiles Settings Tab -->
+                <div id="profiles-settings-tab"
+                     class="settings-tab-content active">
+                    <div class="section">
+                        <h3>Add New Profile</h3>
+                        <form id="profile-form">
+                            <div class="form-group">
+                                <label for="profile-name">Profile Name:</label>
+                                <input type="text" id="profile-name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="base-url">Base URL:</label>
+                                <input type="url" id="base-url"
+                                       value="https://nyaa.si" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="uploader">
+                                    Uploader (optional):
+                                </label>
+                                <input type="text" id="uploader">
+                            </div>
+                            <div class="form-group">
+                                <label for="quality">Quality (optional):</label>
+                                <input type="text" id="quality"
+                                       placeholder="e.g., 720p, 1080p">
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                Add Profile
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="section">
+                        <h3>Existing Profiles</h3>
+                        <div id="profiles-list" class="list-container"></div>
+                    </div>
+                </div>
+
+                <!-- Transmission Settings Tab -->
+                <div id="transmission-settings-tab"
+                     class="settings-tab-content">
+                    <div class="section">
+                        <h3>Transmission Configuration</h3>
+                        <form id="transmission-form">
+                            <div class="form-group">
+                                <label for="transmission-host">Host:</label>
+                                <input type="text" id="transmission-host"
+                                       placeholder="localhost" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="transmission-port">Port:</label>
+                                <input type="number" id="transmission-port"
+                                       placeholder="9091" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                Save Settings
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for selecting source -->
+    <div id="source-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Select Source</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div id="modal-body" class="modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Modal for adding show -->
+    <div id="add-show-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Show</h3>
+                <span class="close-add">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="search-container" style="margin-bottom: 20px;">
+                    <input type="text" id="show-search"
+                           placeholder="Search available shows...">
+                </div>
+                <div id="shows-list" class="list-container"
+                     style="max-height: 400px; overflow-y: auto;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
