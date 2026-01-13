@@ -189,6 +189,7 @@ def update_cached_shows_once():
     try:
         print("Initial cache update...")
         conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
         c = conn.cursor()
 
         c.execute('DELETE FROM cached_shows')
@@ -197,14 +198,8 @@ def update_cached_shows_once():
         profiles = c.fetchall()
 
         for profile in profiles:
-            # Handle both old and new schema
-            if len(profile) >= 7:
-                profile_id, name, base_url, uploader, quality, color, _ = profile
-            else:
-                profile_id, name, base_url, uploader, quality, _ = profile
-                color = '#88c0d0'
-                
-            feed_url = build_feed_url(base_url, uploader, quality)
+            color = profile['color'] or '#88c0d0'
+            feed_url = build_feed_url(profile['base_url'], profile['uploader'], profile['quality'])
 
             try:
                 feed = feedparser.parse(feed_url)
@@ -220,13 +215,13 @@ def update_cached_shows_once():
                             (show_name, profile_id, profile_name,
                              base_url, uploader, quality, color)
                             VALUES (?, ?, ?, ?, ?, ?, ?)
-                        ''', (show_name, profile_id, name, base_url,
-                              uploader, quality, color))
+                        ''', (show_name, profile['id'], profile['name'], profile['base_url'],
+                              profile['uploader'], profile['quality'], color))
 
-                print(f"Cached {len(shows_seen)} shows from {name}")
+                print(f"Cached {len(shows_seen)} shows from {profile['name']}")
 
             except Exception as e:
-                print(f"Error caching feed {name}: {e}")
+                print(f"Error caching feed {profile['name']}: {e}")
 
         conn.commit()
         conn.close()
@@ -336,6 +331,7 @@ def update_cached_shows():
         try:
             print("Updating cached shows...")
             conn = sqlite3.connect(DB_PATH)
+            conn.row_factory = sqlite3.Row
             c = conn.cursor()
 
             # Clear old cache
@@ -346,14 +342,8 @@ def update_cached_shows():
             profiles = c.fetchall()
 
             for profile in profiles:
-                # Handle both old and new schema
-                if len(profile) >= 7:
-                    profile_id, name, base_url, uploader, quality, color, _ = profile
-                else:
-                    profile_id, name, base_url, uploader, quality, _ = profile
-                    color = '#88c0d0'
-                    
-                feed_url = build_feed_url(base_url, uploader, quality)
+                color = profile['color'] or '#88c0d0'
+                feed_url = build_feed_url(profile['base_url'], profile['uploader'], profile['quality'])
 
                 try:
                     feed = feedparser.parse(feed_url)
@@ -369,13 +359,13 @@ def update_cached_shows():
                                 (show_name, profile_id, profile_name,
                                  base_url, uploader, quality, color)
                                 VALUES (?, ?, ?, ?, ?, ?, ?)
-                            ''', (show_name, profile_id, name, base_url,
-                                  uploader, quality, color))
+                            ''', (show_name, profile['id'], profile['name'], profile['base_url'],
+                                  profile['uploader'], profile['quality'], color))
 
-                    print(f"Cached {len(shows_seen)} shows from {name}")
+                    print(f"Cached {len(shows_seen)} shows from {profile['name']}")
 
                 except Exception as e:
-                    print(f"Error caching feed {name}: {e}")
+                    print(f"Error caching feed {profile['name']}: {e}")
 
             conn.commit()
             conn.close()
@@ -519,33 +509,22 @@ def serve_static(path):
 def manage_profiles():
     """Get all profiles or create a new profile."""
     conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
     c = conn.cursor()
 
     if request.method == 'GET':
-        c.execute('SELECT * FROM feed_profiles ORDER BY created_at DESC')
+        c.execute('SELECT id, name, base_url, uploader, quality, color, created_at FROM feed_profiles ORDER BY created_at DESC')
         profiles = []
         for row in c.fetchall():
-            # Handle both old and new schema
-            if len(row) >= 7:
-                profiles.append({
-                    'id': row[0],
-                    'name': row[1],
-                    'base_url': row[2],
-                    'uploader': row[3],
-                    'quality': row[4],
-                    'color': row[5] or '#88c0d0',
-                    'created_at': row[6]
-                })
-            else:
-                profiles.append({
-                    'id': row[0],
-                    'name': row[1],
-                    'base_url': row[2],
-                    'uploader': row[3],
-                    'quality': row[4],
-                    'color': '#88c0d0',
-                    'created_at': row[5]
-                })
+            profiles.append({
+                'id': row['id'],
+                'name': row['name'],
+                'base_url': row['base_url'],
+                'uploader': row['uploader'],
+                'quality': row['quality'],
+                'color': row['color'] or '#88c0d0',
+                'created_at': row['created_at']
+            })
         conn.close()
         return jsonify(profiles)
 
@@ -598,16 +577,18 @@ def get_shows():
     search_query = request.args.get('q', '').lower()
 
     conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
     c = conn.cursor()
 
     if search_query:
         c.execute('''
-            SELECT * FROM cached_shows
+            SELECT show_name, profile_id, profile_name, base_url, uploader, quality, color
+            FROM cached_shows
             WHERE LOWER(show_name) LIKE ?
             ORDER BY show_name
         ''', (f'%{search_query}%',))
     else:
-        c.execute('SELECT * FROM cached_shows ORDER BY show_name')
+        c.execute('SELECT show_name, profile_id, profile_name, base_url, uploader, quality, color FROM cached_shows ORDER BY show_name')
 
     cached = c.fetchall()
     conn.close()
@@ -615,25 +596,17 @@ def get_shows():
     # Group by show name
     shows_dict = {}
     for row in cached:
-        # Handle both old and new schema
-        if len(row) >= 9:
-            (_, show_name, profile_id, profile_name,
-             base_url, uploader, quality, color, _) = row
-        else:
-            (_, show_name, profile_id, profile_name,
-             base_url, uploader, quality, _) = row
-            color = '#88c0d0'
-
+        show_name = row['show_name']
         if show_name not in shows_dict:
             shows_dict[show_name] = []
 
         shows_dict[show_name].append({
-            'profile_id': profile_id,
-            'profile_name': profile_name,
-            'base_url': base_url,
-            'uploader': uploader,
-            'quality': quality,
-            'color': color
+            'profile_id': row['profile_id'],
+            'profile_name': row['profile_name'],
+            'base_url': row['base_url'],
+            'uploader': row['uploader'],
+            'quality': row['quality'],
+            'color': row['color'] or '#88c0d0'
         })
 
     shows = []
@@ -652,44 +625,31 @@ def get_shows():
 def manage_tracked_shows():
     """Get tracked shows or add a new tracked show."""
     conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
     c = conn.cursor()
 
     if request.method == 'GET':
         c.execute('''
-            SELECT ts.*, fp.name, fp.base_url, fp.uploader, fp.quality, fp.color
+            SELECT ts.id, ts.show_name, ts.feed_url, ts.profile_id, ts.added_at,
+                   fp.name as profile_name, fp.base_url, fp.uploader, fp.quality, fp.color
             FROM tracked_shows ts
             LEFT JOIN feed_profiles fp ON ts.profile_id = fp.id
             ORDER BY ts.added_at DESC
         ''')
         tracked = []
         for row in c.fetchall():
-            # Handle both old and new schema
-            if len(row) >= 10:
-                tracked.append({
-                    'id': row[0],
-                    'show_name': row[1],
-                    'feed_url': row[2],
-                    'profile_id': row[3],
-                    'added_at': row[4],
-                    'profile_name': row[5],
-                    'base_url': row[6],
-                    'uploader': row[7],
-                    'quality': row[8],
-                    'color': row[9] or '#88c0d0'
-                })
-            else:
-                tracked.append({
-                    'id': row[0],
-                    'show_name': row[1],
-                    'feed_url': row[2],
-                    'profile_id': row[3],
-                    'added_at': row[4],
-                    'profile_name': row[5],
-                    'base_url': row[6],
-                    'uploader': row[7],
-                    'quality': row[8],
-                    'color': '#88c0d0'
-                })
+            tracked.append({
+                'id': row['id'],
+                'show_name': row['show_name'],
+                'feed_url': row['feed_url'],
+                'profile_id': row['profile_id'],
+                'added_at': row['added_at'],
+                'profile_name': row['profile_name'],
+                'base_url': row['base_url'],
+                'uploader': row['uploader'],
+                'quality': row['quality'],
+                'color': row['color'] or '#88c0d0'
+            })
         conn.close()
         return jsonify(tracked)
 
