@@ -417,6 +417,9 @@ document.querySelector('.close-edit-show').addEventListener('click', () => {
 async function trackShow(showName, profileId) {
     document.getElementById('add-show-name').value = showName;
     document.getElementById('add-show-profile-id').value = profileId;
+    document.getElementById('add-show-season').value = 'Season 01';
+    document.getElementById('add-show-max-age').value = '30';
+
 
     document.getElementById('add-show-page-1').style.display = 'none';
     document.getElementById('add-show-page-2').style.display = 'block';

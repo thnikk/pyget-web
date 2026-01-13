@@ -3,6 +3,7 @@
 Anime RSS feed manager with Transmission integration.
 Provides API endpoints for managing RSS feed profiles and tracked shows.
 """
+import os
 import re
 import sqlite3
 import threading
@@ -273,7 +274,8 @@ def check_and_download_torrents():
                 continue
 
             for show in tracked_shows:
-                show_id, show_name, feed_url, profile_id, _, _, _ = show
+                show_id, show_name, feed_url, profile_id, season_name, _, _ = show
+                download_path = os.path.join(download_dir, show_name, season_name) if season_name else os.path.join(download_dir, show_name)
 
                 try:
                     # Parse the RSS feed
@@ -307,7 +309,7 @@ def check_and_download_torrents():
 
                         # Add torrent to Transmission
                         try:
-                            tc.add_torrent(torrent_url, download_dir=download_dir)
+                            tc.add_torrent(torrent_url, download_dir=download_path)
                             print(f"Added to Transmission: {entry.title}")
 
                             # Only record if successfully added
@@ -413,13 +415,15 @@ def check_single_show(tracked_show_id):
             conn.close()
             return
 
-        show_id, show_name, feed_url, profile_id, _, _, _ = show
+        show_id, show_name, feed_url, profile_id, season_name, _, _ = show
 
         tc, download_dir = get_transmission_client()
         if not tc:
             print("Cannot connect to Transmission")
             conn.close()
             return
+
+        download_path = os.path.join(download_dir, show_name, season_name) if season_name else os.path.join(download_dir, show_name)
 
         feed = feedparser.parse(feed_url)
 
@@ -448,7 +452,7 @@ def check_single_show(tracked_show_id):
                 continue
 
             try:
-                tc.add_torrent(torrent_url, download_dir=download_dir)
+                tc.add_torrent(torrent_url, download_dir=download_path)
                 print(f"Added to Transmission: {entry.title}")
 
                 # Only record if successfully added
