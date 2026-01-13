@@ -274,6 +274,33 @@ async function loadShows(searchQuery = '') {
         const response = await fetch(url);
         const shows = await response.json();
 
+        if (shows.length === 0 && searchQuery) {
+            // No shows found, offer to create a custom one
+            const profilesResponse = await fetch(`${API_BASE}/profiles`);
+            const profiles = await profilesResponse.json();
+            
+            container.innerHTML = `
+                <div class="add-show-modal-item">
+                    <div class="add-show-modal-item-header">
+                        Custom: ${searchQuery}
+                    </div>
+                    <div class="source-badges">
+                        ${profiles.map(source => `
+                            <div class="source-badge"
+                                 style="background-color: ${source.color || '#88c0d0'}"
+                                 onclick="trackShow('${escapeHtml(searchQuery)}', ${source.id})"
+                                 title="${source.name}${source.uploader ? ' - ' + source.uploader : ''}${source.quality ? ' - ' + source.quality : ''}">
+                                <span class="source-badge-name">${source.name}</span>
+                                ${source.quality ? `<span class="source-badge-quality">${source.quality}</span>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+
         if (shows.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
