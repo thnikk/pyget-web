@@ -102,8 +102,9 @@ body {
 
 .nav-tab:hover {
     color: var(--nord6);
-    font-weight: bold;
+    /* font-weight: bold; */
     /* background: rgba(255, 255, 255, 0.05); */
+    border-bottom: 2px solid rgba(255,255,255,0.5);
 }
 
 .nav-tab.active {
@@ -137,6 +138,7 @@ body {
     color: var(--nord6);
     margin-bottom: 20px;
     font-size: 1.5rem;
+    font-weight: normal;
 }
 
 .section-header {
@@ -219,6 +221,12 @@ body {
 }
 
 /* Buttons */
+
+button {
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+}
 
 .button-container {
     display: flex;
@@ -664,6 +672,7 @@ body {
 
 .modal-header h3 {
     font-size: 1.5rem;
+    font-weight: normal;
     margin: 0;
     color: var(--nord6);
 }
