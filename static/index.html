@@ -129,8 +129,11 @@
                     <form id="general-settings-form" class="form-container">
                         <div class="form-group">
                             <label for="download-directory">Download directory:</label>
-                            <input type="text" id="download-directory"
-                                   placeholder="/downloads" required>
+                            <div class="path-suggestions-wrapper">
+                                <input type="text" id="download-directory"
+                                       placeholder="/downloads" autocomplete="off" required>
+                                <div id="settings-path-suggestions" class="path-suggestions-dropdown" style="display: none;"></div>
+                            </div>
                         </div>
                         <button type="submit" class="btn btn-primary">
                             Save Settings
@@ -262,8 +265,11 @@
                         <h4>General Settings</h4>
                         <div class="form-group">
                             <label for="setup-download-directory">Download directory:</label>
-                            <input type="text" id="setup-download-directory"
-                                   placeholder="/downloads" required>
+                            <div class="path-suggestions-wrapper">
+                                <input type="text" id="setup-download-directory"
+                                       placeholder="/downloads" autocomplete="off" required>
+                                <div id="setup-path-suggestions" class="path-suggestions-dropdown" style="display: none;"></div>
+                            </div>
                         </div>
                     </div>
 

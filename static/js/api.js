@@ -58,5 +58,7 @@ export const api = {
         body: formData
     }),
     
-    getSchedule: () => request('/schedule')
+    getSchedule: () => request('/schedule'),
+    
+    getPathSuggestions: (path) => request(`/utils/path-suggestions?path=${encodeURIComponent(path)}`)
 };

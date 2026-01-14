@@ -755,6 +755,45 @@ button {
     color: var(--nord11);
 }
 
+/* Path Autocompletion Custom UI */
+.path-suggestions-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.path-suggestions-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--nord1);
+    border: 2px solid var(--nord3);
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    z-index: 2000;
+    max-height: 200px;
+    overflow-y: auto;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.path-suggestion-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    color: var(--nord4);
+    transition: all 0.2s ease;
+    border-bottom: 1px solid var(--nord2);
+}
+
+.path-suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.path-suggestion-item:hover,
+.path-suggestion-item.selected {
+    background: var(--nord2);
+    color: var(--nord8);
+}
+
 /* Modal */
 .modal {
     display: none;

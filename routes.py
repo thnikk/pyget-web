@@ -389,6 +389,56 @@ def manage_settings():
         return jsonify({'status': 'updated'})
 
 
+@api_bp.route('/api/utils/path-suggestions', methods=['GET'])
+def get_path_suggestions():
+    """Get directory suggestions for a given path."""
+    original_path = request.args.get('path', '')
+    
+    # Normalize path for processing
+    path = original_path
+    use_tilde = path.startswith('~')
+    if use_tilde:
+        path = os.path.expanduser(path)
+    
+    if not path:
+        path = '/'
+        
+    # Determine the directory to list and the prefix to filter by
+    if os.path.isdir(path) and original_path.endswith('/'):
+        # If it's a directory and ends in slash, list its contents
+        search_dir = path
+        prefix = ''
+    else:
+        # Otherwise, list the parent directory and filter by the basename
+        search_dir = os.path.dirname(path) or '/'
+        prefix = os.path.basename(path)
+    
+    suggestions = []
+    try:
+        if os.path.exists(search_dir) and os.path.isdir(search_dir):
+            home = os.path.expanduser('~')
+            for item in os.listdir(search_dir):
+                if item.startswith('.'): continue # Skip hidden
+                
+                full_path = os.path.join(search_dir, item)
+                if os.path.isdir(full_path) and item.lower().startswith(prefix.lower()):
+                    # Format for display
+                    display_path = full_path
+                    if use_tilde and display_path.startswith(home):
+                        display_path = display_path.replace(home, '~', 1)
+                    
+                    # Ensure trailing slash for directories to make navigation easier
+                    if not display_path.endswith('/'):
+                        display_path += '/'
+                        
+                    suggestions.append(display_path)
+        suggestions.sort()
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+        
+    return jsonify(suggestions[:20])
+
+
 @api_bp.route('/api/schedule', methods=['GET'])
 def get_schedule():
     """Get download history and predicted future releases for tracked shows."""

@@ -1,7 +1,7 @@
 import { loadSources, handleSourceSubmit } from './sources.js';
 import { loadTrackedShows, loadShows, handleAddShowDetailsSubmit, handleEditShowSubmit, resetAddShowModal } from './shows.js';
 import { loadSchedule } from './schedule.js';
-import { loadSettings, handleGeneralSettingsSubmit, handleTransmissionSettingsSubmit, handleCleanupArtwork, checkSetup, handleSetupSubmit } from './settings.js';
+import { loadSettings, handleGeneralSettingsSubmit, handleTransmissionSettingsSubmit, handleCleanupArtwork, checkSetup, handleSetupSubmit, handlePathInput, handlePathKeydown } from './settings.js';
 import { closeModal } from './ui.js';
 
 // Tab navigation
@@ -48,6 +48,12 @@ document.getElementById('source-form').onsubmit = handleSourceSubmit;
 document.getElementById('add-show-details-form').onsubmit = handleAddShowDetailsSubmit;
 document.getElementById('edit-show-form').onsubmit = handleEditShowSubmit;
 document.getElementById('setup-form').onsubmit = handleSetupSubmit;
+
+// Path autocompletion
+document.getElementById('download-directory').oninput = handlePathInput;
+document.getElementById('download-directory').onkeydown = handlePathKeydown;
+document.getElementById('setup-download-directory').oninput = handlePathInput;
+document.getElementById('setup-download-directory').onkeydown = handlePathKeydown;
 
 document.querySelector('.close-settings').onclick = () => closeModal('settings-modal');
 document.querySelector('.close-add').onclick = resetAddShowModal;
