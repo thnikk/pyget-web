@@ -56,7 +56,7 @@
                 <span class="close-edit">&times;</span>
             </div>
             <div class="modal-body">
-                <form id="source-form" class="source-form">
+                <form id="source-form" class="form-container">
                     <input type="hidden" id="source-id">
                     <div class="form-row">
                         <div class="form-group">
@@ -164,7 +164,7 @@
                     </div>
                 </div>
                 <div id="add-show-page-2" style="display: none;">
-                    <form id="add-show-details-form">
+                    <form id="add-show-details-form" class="form-container">
                         <div class="form-group">
                             <label for="add-show-name">Show Name:</label>
                             <input type="text" id="add-show-name" required>
@@ -178,8 +178,10 @@
                             <label for="add-show-max-age">Max Age (days):</label>
                             <input type="number" id="add-show-max-age" value="30">
                         </div>
-                        <button type="submit" class="btn btn-primary">Track Show</button>
-                        <button type="button" class="btn btn-secondary" id="add-show-back-btn">Back</button>
+                        <div class="button-container">
+                            <button type="button" class="btn btn-secondary" id="add-show-back-btn">Back</button>
+                            <button type="submit" class="btn btn-primary">Track Show</button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -194,7 +196,7 @@
                 <span class="close-edit-show close">&times;</span>
             </div>
             <div class="modal-body">
-                <form id="edit-show-form">
+                <form id="edit-show-form" class="form-container">
                     <input type="hidden" id="edit-show-id">
                     <div class="form-group">
                         <label for="edit-show-name">Show Name:</label>

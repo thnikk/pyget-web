@@ -37,7 +37,7 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    font-family: -apple-system, Nunito, BlinkMacSystemFont, 'Segoe UI', Roboto,
                  Oxygen, Ubuntu, Cantarell, sans-serif;
     background: var(--bg-body);
     min-height: 100vh;
@@ -138,11 +138,14 @@ body {
 }
 
 /* Forms */
-.source-form {
-    background: var(--nord0);
-    padding: 30px;
-    border-radius: 8px;
-    border: 2px solid var(--nord3);
+.form-container {
+    /* background: var(--nord0); */
+    /* padding: 30px; */
+    /* border-radius: 8px; */
+    /* border: 2px solid var(--nord3); */
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
 .form-row {
@@ -152,7 +155,7 @@ body {
 }
 
 .form-group {
-    margin-bottom: 15px;
+    /* margin-bottom: 15px; */
 }
 
 .form-group label {
@@ -186,7 +189,6 @@ body {
 
 .search-container {
     flex: 1;
-    max-width: 400px;
 }
 
 .search-container input {
@@ -621,7 +623,7 @@ body {
 .modal-header {
     background: var(--bg-header);
     color: var(--nord6);
-    padding: 20px 30px;
+    padding: 10px 30px;
     display: flex;
     justify-content: space-between;
     align-items: center;
