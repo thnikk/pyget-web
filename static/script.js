@@ -505,10 +505,6 @@ async function loadTrackedShows() {
                  ondragover="event.preventDefault(); this.classList.add('drag-over');"
                  ondragleave="this.classList.remove('drag-over');"
                  ondrop="handleShowDrop(event, ${show.id})">
-                <div class="show-card-badge"
-                     style="background-color: ${show.color || '#88c0d0'}">
-                    ${show.profile_name}
-                </div>
                 <div class="show-card-image">
                     ${show.image_path ? 
                         `<img src="${show.image_path}" alt="${escapeHtml(show.show_name)}" style="width: 100%; height: 100%; object-fit: cover;">` :
@@ -517,6 +513,10 @@ async function loadTrackedShows() {
                 </div>
                 <div class="show-card-content">
                     <div class="show-card-title">${show.show_name}</div>
+                    <div class="show-card-badge"
+                         style="background-color: ${show.color || '#88c0d0'}">
+                        ${show.profile_name}
+                    </div>
                 </div>
             </div>
         `).join('');
