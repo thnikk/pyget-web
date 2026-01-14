@@ -69,6 +69,27 @@ document.getElementById('general-settings-form').addEventListener('submit', asyn
     }
 });
 
+document.getElementById('cleanup-artwork-btn').addEventListener('click', async () => {
+    if (!confirm('Are you sure you want to delete all artwork files that are not associated with any tracked show?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/settings/artwork/cleanup`, {
+            method: 'POST'
+        });
+        const result = await response.json();
+        
+        if (response.ok) {
+            showNotification(`Cleanup complete. Deleted ${result.count} image(s).`, 'success');
+        } else {
+            showNotification(`Error: ${result.error}`, 'error');
+        }
+    } catch (error) {
+        showNotification('Error connecting to server for cleanup', 'error');
+    }
+});
+
 async function loadSettings() {
     try {
         const response = await fetch(`${API_BASE}/settings`);

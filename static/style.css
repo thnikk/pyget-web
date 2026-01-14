@@ -595,6 +595,17 @@ body {
     display: block;
 }
 
+.settings-section {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid var(--nord3);
+}
+
+.settings-section h4 {
+    margin-bottom: 15px;
+    color: var(--nord6);
+}
+
 /* Modal */
 .modal {
     display: none;

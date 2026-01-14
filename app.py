@@ -919,6 +919,38 @@ def manage_settings():
         return jsonify({'status': 'updated'})
 
 
+@app.route('/api/settings/artwork/cleanup', methods=['POST'])
+def cleanup_artwork():
+    """Delete artwork files not associated with any tracked show."""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute('SELECT image_path FROM tracked_shows WHERE image_path IS NOT NULL')
+        used_images = {row[0] for row in c.fetchall()}
+        conn.close()
+
+        art_dir = os.path.join(DATA_DIR, 'art')
+        if not os.path.exists(art_dir):
+            return jsonify({'count': 0})
+
+        deleted_count = 0
+        for filename in os.listdir(art_dir):
+            filepath = os.path.join(art_dir, filename)
+            # image_path in DB is like "art/filename.jpg", so check "art/" + filename
+            rel_path = f"art/{filename}"
+            
+            if rel_path not in used_images:
+                try:
+                    os.remove(filepath)
+                    deleted_count += 1
+                except OSError as e:
+                    print(f"Error deleting {filepath}: {e}")
+
+        return jsonify({'count': deleted_count})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 if __name__ == '__main__':
     # Start background torrent checker
     checker_thread = threading.Thread(
