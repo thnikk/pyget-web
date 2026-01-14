@@ -680,13 +680,13 @@ async function loadSchedule() {
             }
         });
 
-        nextEpisodes.sort((a, b) => new Date(a.next_release) - new Date(b.next_release));
+        nextEpisodes.sort((a, b) => new Date(a.next_release + 'Z') - new Date(b.next_release + 'Z'));
 
         if (nextEpisodes.length === 0) {
             upcomingContainer.innerHTML = '<div class="empty-state">No upcoming releases predicted yet.</div>';
         } else {
             upcomingContainer.innerHTML = nextEpisodes.map(item => {
-                const nextDate = new Date(item.next_release);
+                const nextDate = new Date(item.next_release + 'Z');
                 const isOverdue = nextDate < new Date();
                 
                 return `
@@ -717,7 +717,7 @@ async function loadSchedule() {
 }
 
 function formatDate(dateStr) {
-    const date = new Date(dateStr);
+    const date = new Date(dateStr + 'Z');
     return date.toLocaleDateString(undefined, { 
         weekday: 'long', 
         month: 'short', 

@@ -9,7 +9,8 @@ import sqlite3
 import threading
 import time
 import base64
-from datetime import datetime, timedelta
+import calendar
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from urllib.parse import urlencode
 
@@ -337,7 +338,7 @@ def check_and_download_torrents():
                             published_at = None
                             if hasattr(entry, 'published_parsed'):
                                 published_at = datetime.fromtimestamp(
-                                    time.mktime(entry.published_parsed)).strftime('%Y-%m-%d %H:%M:%S')
+                                    calendar.timegm(entry.published_parsed), timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
 
                             tc.add_torrent(torrent_url, download_dir=download_path)
                             print(f"Added to Transmission: {entry.title}")
@@ -493,7 +494,7 @@ def check_single_show(tracked_show_id):
                 published_at = None
                 if hasattr(entry, 'published_parsed'):
                     published_at = datetime.fromtimestamp(
-                        time.mktime(entry.published_parsed)).strftime('%Y-%m-%d %H:%M:%S')
+                        calendar.timegm(entry.published_parsed), timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
 
                 tc.add_torrent(torrent_url, download_dir=download_path)
                 print(f"Added to Transmission: {entry.title}")
@@ -987,8 +988,8 @@ def get_schedule():
             show_history[sid].append(item)
 
         schedule = []
-        now = datetime.now()
-        # Create a date object for comparison (start of today)
+        now = datetime.now(timezone.utc)
+        # Create a date object for comparison (start of today in UTC)
         today = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
         for sid, info in shows.items():
@@ -1003,7 +1004,7 @@ def get_schedule():
                 except ValueError:
                     last_ep_num = 0
                     
-                last_date = datetime.strptime(last_rel['release_date'], '%Y-%m-%d %H:%M:%S')
+                last_date = datetime.strptime(last_rel['release_date'], '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
                 
                 # Start predicting from the next episode
                 current_ep = last_ep_num + 1
