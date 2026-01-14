@@ -46,9 +46,9 @@ body {
 
 /* Navbar */
 .navbar {
-    background: var(--nord0);
-    border-bottom: 2px solid var(--nord3);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    /* background: var(--nord0); */
+    /* border-bottom: 2px solid var(--nord3); */
+    /* box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); */
     position: sticky;
     top: 0;
     z-index: 100;
@@ -66,8 +66,17 @@ body {
 
 .navbar-title {
     font-size: 1.5rem;
+    font-weight: normal;
     color: var(--nord6);
     margin: 0;
+}
+
+.navbar-icon {
+    height: 100%;
+    width: auto;
+    object-fit: contain;
+    padding: 15px 0;
+    margin-right: -20px; /* Reduce gap specifically for the icon and title */
 }
 
 .navbar-tabs {
@@ -83,7 +92,7 @@ body {
     border-bottom: 3px solid transparent;
     cursor: pointer;
     font-size: 1rem;
-    font-weight: 600;
+    font-weight: normal;
     color: var(--nord4);
     transition: all 0.3s ease;
     height: 64px;
@@ -93,13 +102,14 @@ body {
 
 .nav-tab:hover {
     color: var(--nord6);
-    background: rgba(255, 255, 255, 0.05);
+    font-weight: bold;
+    /* background: rgba(255, 255, 255, 0.05); */
 }
 
 .nav-tab.active {
-    color: var(--nord8);
+    /* color: var(--nord8); */
     border-bottom-color: var(--nord8);
-    background: rgba(136, 192, 208, 0.1);
+    /* background: rgba(136, 192, 208, 0.1); */
 }
 
 /* Main Container */
@@ -528,7 +538,6 @@ body {
     font-weight: 700;
     width: fit-content;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    margin-top: 8px;
 }
 
 .show-card-image {
@@ -545,14 +554,17 @@ body {
 }
 
 .show-card-content {
-    padding: 20px 15px 15px 15px;
+    padding: 15px;
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
+    gap: 10px;
     display: flex;
     flex-direction: column;
-    background: linear-gradient(transparent, rgba(0, 0, 0, 0.8) 40%, rgba(0, 0, 0, 0.95));
+    /* background: linear-gradient(transparent, rgba(0, 0, 0, 0.8) 40%, rgba(0, 0, 0, 0.95)); */
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
 }
 
 .show-card-title {
