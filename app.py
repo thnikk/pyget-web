@@ -28,7 +28,7 @@ def create_app():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Pyget Web')
     parser.add_argument('--host', type=str, default='0.0.0.0', help='Host to listen on')
-    parser.add_argument('--port', type=int, default=5000, help='Port to listen on')
+    parser.add_argument('--port', type=int, default=5123, help='Port to listen on')
     args, _ = parser.parse_known_args()
 
     # Initialize database

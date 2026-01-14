@@ -27,4 +27,4 @@ To install as a systemd user service:
 ./run.sh --install
 ```
 
-Once it's running, open your browser and navigate to `http://localhost:5000`. If you want to use a different port, you can use the argument `--port` when launching the server.
+Once it's running, open your browser and navigate to `http://localhost:5123`. If you want to use a different port, you can use the argument `--port` when launching the server.
