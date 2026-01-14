@@ -88,10 +88,18 @@ def init_db():
             torrent_url TEXT NOT NULL,
             torrent_name TEXT NOT NULL,
             added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            published_at TIMESTAMP,
             UNIQUE(torrent_url),
             FOREIGN KEY (tracked_show_id) REFERENCES tracked_shows (id)
         )
     ''')
+
+    # Add published_at column if it doesn't exist
+    try:
+        c.execute('ALTER TABLE downloaded_torrents ADD COLUMN published_at TIMESTAMP')
+        print("Added published_at column to downloaded_torrents")
+    except sqlite3.OperationalError:
+        pass # Column already exists
 
     # Cached shows table for profile feed caching
     c.execute('''
@@ -325,6 +333,12 @@ def check_and_download_torrents():
 
                         # Add torrent to Transmission
                         try:
+                            # Get publication date
+                            published_at = None
+                            if hasattr(entry, 'published_parsed'):
+                                published_at = datetime.fromtimestamp(
+                                    time.mktime(entry.published_parsed)).strftime('%Y-%m-%d %H:%M:%S')
+
                             tc.add_torrent(torrent_url, download_dir=download_path)
                             print(f"Added to Transmission: {entry.title}")
 
@@ -333,9 +347,9 @@ def check_and_download_torrents():
                                 c.execute('''
                                     INSERT INTO downloaded_torrents
                                     (tracked_show_id, torrent_url,
-                                     torrent_name)
-                                    VALUES (?, ?, ?)
-                                ''', (show_id, torrent_url, entry.title))
+                                     torrent_name, published_at)
+                                    VALUES (?, ?, ?, ?)
+                                ''', (show_id, torrent_url, entry.title, published_at))
                                 conn.commit()
                             except sqlite3.IntegrityError:
                                 # Already in database, skip
@@ -475,6 +489,12 @@ def check_single_show(tracked_show_id):
                 continue
 
             try:
+                # Get publication date
+                published_at = None
+                if hasattr(entry, 'published_parsed'):
+                    published_at = datetime.fromtimestamp(
+                        time.mktime(entry.published_parsed)).strftime('%Y-%m-%d %H:%M:%S')
+
                 tc.add_torrent(torrent_url, download_dir=download_path)
                 print(f"Added to Transmission: {entry.title}")
 
@@ -482,9 +502,9 @@ def check_single_show(tracked_show_id):
                 try:
                     c.execute('''
                         INSERT INTO downloaded_torrents
-                        (tracked_show_id, torrent_url, torrent_name)
-                        VALUES (?, ?, ?)
-                    ''', (show_id, torrent_url, entry.title))
+                        (tracked_show_id, torrent_url, torrent_name, published_at)
+                        VALUES (?, ?, ?, ?)
+                    ''', (show_id, torrent_url, entry.title, published_at))
                     conn.commit()
                 except sqlite3.IntegrityError:
                     # Already in database, skip
@@ -917,6 +937,113 @@ def manage_settings():
         conn.commit()
         conn.close()
         return jsonify({'status': 'updated'})
+
+
+def extract_episode_number(title: str) -> Optional[str]:
+    """Extract episode number from anime title format."""
+    # Expected: [SubGroup] Show name - 01 (quality) [id].mkv
+    match = re.search(r'-\s*(\d+)', title)
+    if match:
+        return match.group(1)
+    return None
+
+
+@app.route('/api/schedule', methods=['GET'])
+def get_schedule():
+    """Get download history and predicted future releases for tracked shows."""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+
+        # Get all tracked shows
+        c.execute('''
+            SELECT ts.id, ts.show_name, ts.image_path, fp.color
+            FROM tracked_shows ts
+            LEFT JOIN feed_profiles fp ON ts.profile_id = fp.id
+        ''')
+        shows = {row['id']: dict(row) for row in c.fetchall()}
+
+        # Get download history
+        c.execute('''
+            SELECT tracked_show_id, torrent_name, added_at, published_at
+            FROM downloaded_torrents
+            ORDER BY COALESCE(published_at, added_at) DESC
+        ''')
+        history = c.fetchall()
+        
+        # Group history by show
+        show_history = {}
+        for row in history:
+            sid = row['tracked_show_id']
+            if sid not in shows:
+                continue
+            if sid not in show_history:
+                show_history[sid] = []
+            
+            item = dict(row)
+            item['release_date'] = row['published_at'] or row['added_at']
+            item['episode'] = extract_episode_number(row['torrent_name'])
+            show_history[sid].append(item)
+
+        schedule = []
+        now = datetime.now()
+        # Create a date object for comparison (start of today)
+        today = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        for sid, info in shows.items():
+            releases = show_history.get(sid, [])
+            predictions = []
+            
+            if releases:
+                # Use the latest release as the anchor
+                last_rel = releases[0]
+                try:
+                    last_ep_num = int(last_rel.get('episode') or 0)
+                except ValueError:
+                    last_ep_num = 0
+                    
+                last_date = datetime.strptime(last_rel['release_date'], '%Y-%m-%d %H:%M:%S')
+                
+                # Start predicting from the next episode
+                current_ep = last_ep_num + 1
+                # Base expected date is 1 week after last release
+                current_date = last_date + timedelta(days=7)
+                
+                # If the expected date is in the past, it means a release was missed.
+                # Shift all subsequent releases by a week until the expected date is today or in the future.
+                while current_date < today:
+                    current_date += timedelta(days=7)
+                
+                # Predict until end of season (assume 12 episodes)
+                # If we're already past 12, predict 3 more
+                max_ep = max(12, last_ep_num + 3)
+                
+                ep_padding = len(last_rel.get('episode') or '01')
+                
+                while current_ep <= max_ep:
+                    predictions.append({
+                        'episode': str(current_ep).zfill(ep_padding),
+                        'date': current_date.strftime('%Y-%m-%d %H:%M:%S')
+                    })
+                    current_ep += 1
+                    current_date += timedelta(days=7)
+
+            schedule.append({
+                'id': sid,
+                'show_name': info['show_name'],
+                'image_path': info['image_path'],
+                'color': info['color'],
+                'history': releases[:20],
+                'predictions': predictions
+            })
+
+        conn.close()
+        return jsonify(schedule)
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/settings/artwork/cleanup', methods=['POST'])

@@ -19,6 +19,7 @@
             <div class="navbar-tabs">
                 <button class="nav-tab active" data-tab="shows">Shows</button>
                 <button class="nav-tab" data-tab="sources">Sources</button>
+                <button class="nav-tab" data-tab="schedule">Schedule</button>
             </div>
             <button id="settings-btn" class="btn btn-icon">
                 <span class="material-icons">settings</span>
@@ -45,6 +46,20 @@
                     <h2>My Shows</h2>
                 </div>
                 <div id="tracked-list" class="grid-container"></div>
+            </div>
+        </div>
+
+        <!-- Schedule Tab -->
+        <div id="schedule-tab" class="tab-content">
+            <div class="section">
+                <div class="section-header">
+                    <h2>Release Calendar</h2>
+                    <div id="calendar-month-year" style="font-weight: 600; color: var(--nord8);"></div>
+                </div>
+                <div id="calendar-grid" class="calendar-grid"></div>
+                
+                <h2 style="margin-top: 40px; margin-bottom: 20px;">Upcoming Releases</h2>
+                <div id="upcoming-list" class="upcoming-container"></div>
             </div>
         </div>
     </div>
