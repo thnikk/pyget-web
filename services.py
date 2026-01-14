@@ -84,28 +84,53 @@ def update_cached_shows_once():
 def check_and_download_torrents():
     """
     Background task to check RSS feeds and download new torrents.
-    Runs periodically to check for new episodes.
+    Checks each tracked show based on its profile's interval setting.
     """
     print("Starting torrent checker thread...")
+    profile_last_checked = {}  # Track when each profile was last checked
 
     while True:
         try:
             conn = sqlite3.connect(DB_PATH)
+            conn.row_factory = sqlite3.Row
             c = conn.cursor()
 
-            # Get all tracked shows
-            c.execute('SELECT * FROM tracked_shows')
+            # Get all tracked shows with their profile intervals
+            c.execute('''
+                SELECT ts.*, fp.interval as profile_interval
+                FROM tracked_shows ts
+                LEFT JOIN feed_profiles fp ON ts.profile_id = fp.id
+            ''')
             tracked_shows = c.fetchall()
 
             tc, download_dir = get_transmission_client()
             if not tc:
                 print("Cannot connect to Transmission, skipping check")
                 conn.close()
-                time.sleep(300)  # Wait 5 minutes before retry
+                time.sleep(60)  # Wait 1 minute before retry
                 continue
 
+            current_time = time.time()
+            shows_to_check = []
+
+            # Group shows by profile and check intervals
             for show in tracked_shows:
-                show_id, show_name, feed_url, profile_id, added_at, season_name, max_age, image_path = show
+                profile_id = show['profile_id']
+                interval = (show['profile_interval'] or 30) * 60  # Convert minutes to seconds
+                
+                # Check if this profile needs to be checked
+                if (profile_id not in profile_last_checked or 
+                    current_time - profile_last_checked[profile_id] >= interval):
+                    shows_to_check.append(show)
+                    
+                    # Update last checked time for this profile
+                    profile_last_checked[profile_id] = current_time
+
+            if shows_to_check:
+                print(f"Checking {len(shows_to_check)} shows due for RSS check")
+
+            for show in shows_to_check:
+                show_id, show_name, feed_url, profile_id, added_at, season_name, max_age, image_path = show[:8]
                 download_path = os.path.join(download_dir, show_name, season_name) if season_name else os.path.join(download_dir, show_name)
 
                 try:
@@ -214,65 +239,84 @@ def check_and_download_torrents():
         except Exception as e:
             print(f"Error in torrent checker: {e}")
 
-        # Check every 5 minutes
-        time.sleep(300)
+        # Check every minute for interval evaluation
+        time.sleep(60)
 
 def update_cached_shows():
     """
     Background task to update cached shows from all profile feeds.
-    Runs hourly to keep the show list fresh.
+    Checks each profile based on its interval setting.
     """
     print("Starting feed cache updater thread...")
+    profile_last_cached = {}  # Track when each profile was last cached
 
     while True:
         try:
-            print("Updating cached shows...")
             conn = sqlite3.connect(DB_PATH)
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
-
-            # Clear old cache
-            c.execute('DELETE FROM cached_shows')
 
             # Get all profiles
             c.execute('SELECT * FROM feed_profiles')
             profiles = c.fetchall()
 
+            current_time = time.time()
+            profiles_to_update = []
+
+            # Check which profiles need to be updated
             for profile in profiles:
-                color = profile['color'] or '#88c0d0'
-                feed_url = build_feed_url(profile['base_url'], profile['uploader'], profile['quality'])
+                profile_id = profile['id']
+                interval = (profile['interval'] if profile['interval'] else 60) * 60  # Convert minutes to seconds, default to 1 hour
+                
+                # Check if this profile needs to be updated
+                if (profile_id not in profile_last_cached or 
+                    current_time - profile_last_cached[profile_id] >= interval):
+                    profiles_to_update.append(profile)
+                    
+                    # Update last cached time for this profile
+                    profile_last_cached[profile_id] = current_time
 
-                try:
-                    feed = feedparser.parse(feed_url)
-                    shows_seen = set()
+            if profiles_to_update:
+                print(f"Updating cache for {len(profiles_to_update)} profiles due for refresh")
 
-                    for entry in feed.entries:
-                        show_name = parse_anime_title(entry.title)
-                        if show_name and show_name not in shows_seen:
-                            shows_seen.add(show_name)
+                for profile in profiles_to_update:
+                    # Clear old cache for this profile only
+                    c.execute('DELETE FROM cached_shows WHERE profile_id = ?', (profile['id'],))
+                    
+                    color = profile['color'] or '#88c0d0'
+                    feed_url = build_feed_url(profile['base_url'], profile['uploader'], profile['quality'])
 
-                            c.execute('''
-                                INSERT INTO cached_shows
-                                (show_name, profile_id, profile_name,
-                                 base_url, uploader, quality, color)
-                                VALUES (?, ?, ?, ?, ?, ?, ?)
-                            ''', (show_name, profile['id'], profile['name'], profile['base_url'],
-                                  profile['uploader'], profile['quality'], color))
+                    try:
+                        feed = feedparser.parse(feed_url)
+                        shows_seen = set()
 
-                    print(f"Cached {len(shows_seen)} shows from {profile['name']}")
+                        for entry in feed.entries:
+                            show_name = parse_anime_title(entry.title)
+                            if show_name and show_name not in shows_seen:
+                                shows_seen.add(show_name)
 
-                except Exception as e:
-                    print(f"Error caching feed {profile['name']}: {e}")
+                                c.execute('''
+                                    INSERT INTO cached_shows
+                                    (show_name, profile_id, profile_name,
+                                     base_url, uploader, quality, color)
+                                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                                ''', (show_name, profile['id'], profile['name'], profile['base_url'],
+                                      profile['uploader'], profile['quality'], color))
 
-            conn.commit()
-            conn.close()
-            print("Cache update complete")
+                        print(f"Cached {len(shows_seen)} shows from {profile['name']}")
+
+                    except Exception as e:
+                        print(f"Error caching feed {profile['name']}: {e}")
+
+                conn.commit()
+                conn.close()
+                print("Cache update complete")
 
         except Exception as e:
             print(f"Error in cache updater: {e}")
 
-        # Update every hour
-        time.sleep(3600)
+        # Check every minute for interval evaluation
+        time.sleep(60)
 
 def check_single_show(tracked_show_id):
     """
@@ -366,11 +410,15 @@ def check_single_show(tracked_show_id):
 
 def cache_single_profile(profile):
     """Cache shows from a single profile immediately."""
-    if len(profile) >= 6:
+    if len(profile) >= 7:
+        profile_id, name, base_url, uploader, quality, color, interval = profile
+    elif len(profile) >= 6:
         profile_id, name, base_url, uploader, quality, color = profile
+        interval = 300
     else:
         profile_id, name, base_url, uploader, quality = profile
         color = '#88c0d0'
+        interval = 300
         
     feed_url = build_feed_url(base_url, uploader, quality)
     

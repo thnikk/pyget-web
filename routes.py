@@ -45,7 +45,7 @@ def manage_profile_id(profile_id):
         data = request.json
         c.execute('''
             UPDATE feed_profiles
-            SET name = ?, base_url = ?, uploader = ?, quality = ?, color = ?
+            SET name = ?, base_url = ?, uploader = ?, quality = ?, color = ?, interval = ?
             WHERE id = ?
         ''', (
             data['name'],
@@ -53,6 +53,7 @@ def manage_profile_id(profile_id):
             data.get('uploader'),
             data.get('quality'),
             data.get('color', '#88c0d0'),
+            data.get('interval', 30),
             profile_id
         ))
         conn.commit()
@@ -60,7 +61,7 @@ def manage_profile_id(profile_id):
         # Get the updated profile details for caching
         profile = (profile_id, data['name'], data['base_url'],
                    data.get('uploader'), data.get('quality'),
-                   data.get('color', '#88c0d0'))
+                   data.get('color', '#88c0d0'), data.get('interval', 300))
 
         conn.close()
 
@@ -80,7 +81,7 @@ def manage_profiles():
     c = conn.cursor()
 
     if request.method == 'GET':
-        c.execute('SELECT id, name, base_url, uploader, quality, color, created_at FROM feed_profiles ORDER BY created_at DESC')
+        c.execute('SELECT id, name, base_url, uploader, quality, color, interval, created_at FROM feed_profiles ORDER BY created_at DESC')
         profiles = []
         for row in c.fetchall():
             profiles.append({
@@ -90,6 +91,7 @@ def manage_profiles():
                 'uploader': row['uploader'],
                 'quality': row['quality'],
                 'color': row['color'] or '#88c0d0',
+                'interval': row['interval'] if row['interval'] else 30,
                 'created_at': row['created_at']
             })
         conn.close()
@@ -98,14 +100,15 @@ def manage_profiles():
     elif request.method == 'POST':
         data = request.json
         c.execute('''
-            INSERT INTO feed_profiles (name, base_url, uploader, quality, color)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO feed_profiles (name, base_url, uploader, quality, color, interval)
+            VALUES (?, ?, ?, ?, ?, ?)
         ''', (
             data['name'],
             data['base_url'],
             data.get('uploader'),
             data.get('quality'),
-            data.get('color', '#88c0d0')
+            data.get('color', '#88c0d0'),
+            data.get('interval', 300)
         ))
         conn.commit()
         profile_id = c.lastrowid
@@ -113,7 +116,7 @@ def manage_profiles():
         # Get the profile details
         profile = (profile_id, data['name'], data['base_url'],
                    data.get('uploader'), data.get('quality'),
-                   data.get('color', '#88c0d0'))
+                   data.get('color', '#88c0d0'), data.get('interval', 300))
         
         conn.close()
         

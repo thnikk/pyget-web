@@ -15,6 +15,7 @@ def init_db():
             uploader TEXT,
             quality TEXT,
             color TEXT DEFAULT '#88c0d0',
+            interval INTEGER DEFAULT 30,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
@@ -23,6 +24,13 @@ def init_db():
     try:
         c.execute('ALTER TABLE feed_profiles ADD COLUMN color TEXT DEFAULT "#88c0d0"')
         print("Added color column to feed_profiles")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+
+    # Add interval column if it doesn't exist (for existing databases)
+    try:
+        c.execute('ALTER TABLE feed_profiles ADD COLUMN interval INTEGER DEFAULT 30')
+        print("Added interval column to feed_profiles")
     except sqlite3.OperationalError:
         pass  # Column already exists
 

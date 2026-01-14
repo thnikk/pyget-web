@@ -36,6 +36,9 @@ export async function loadSources() {
                         Quality: ${source.quality}
                     </div>
                 ` : ''}
+                <div class="source-card-meta">
+                    Check Interval: ${source.interval || 30} minutes
+                </div>
             </div>
         `).join('');
         container.innerHTML = content;
@@ -68,6 +71,7 @@ export function openSourceModal(source = null) {
         document.getElementById('base-url').value = source.base_url;
         document.getElementById('uploader').value = source.uploader || '';
         document.getElementById('quality').value = source.quality || '';
+        document.getElementById('source-interval').value = source.interval || 30;
         deleteBtn.style.display = 'block';
         deleteBtn.onclick = () => {
             deleteSource(source.id);
@@ -77,6 +81,7 @@ export function openSourceModal(source = null) {
         modalTitle.textContent = 'Add Source';
         document.getElementById('source-form').reset();
         document.getElementById('source-color').value = '#88c0d0';
+        document.getElementById('source-interval').value = 30;
         deleteBtn.style.display = 'none';
     }
 
@@ -107,6 +112,7 @@ export async function handleSourceSubmit(e) {
         uploader: document.getElementById('uploader').value || null,
         quality: document.getElementById('quality').value || null,
         color: document.getElementById('source-color').value,
+        interval: parseInt(document.getElementById('source-interval').value) || 30,
     };
 
     try {
