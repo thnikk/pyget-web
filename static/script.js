@@ -316,12 +316,12 @@ async function loadShows(searchQuery = '') {
         const response = await fetch(url);
         const shows = await response.json();
 
-        if (shows.length === 0 && searchQuery) {
-            // No shows found, offer to create a custom one
+        let customHtml = '';
+        if (searchQuery) {
             const profilesResponse = await fetch(`${API_BASE}/profiles`);
             const profiles = await profilesResponse.json();
             
-            container.innerHTML = `
+            customHtml = `
                 <div class="add-show-modal-item">
                     <div class="add-show-modal-item-header">
                         Custom: ${searchQuery}
@@ -339,21 +339,27 @@ async function loadShows(searchQuery = '') {
                     </div>
                 </div>
             `;
-            return;
         }
 
-
-        if (shows.length === 0) {
+        if (shows.length === 0 && !searchQuery) {
             container.innerHTML = `
                 <div class="empty-state">
-                    <p>${searchQuery ? 'No shows found matching your search' :
-                         'No shows found. Add some sources first!'}</p>
+                    <p>No shows found. Add some sources first!</p>
                 </div>
             `;
             return;
         }
 
-        container.innerHTML = shows.map(show => `
+        if (shows.length === 0 && searchQuery && !customHtml) {
+             container.innerHTML = `
+                <div class="empty-state">
+                    <p>No shows found matching your search</p>
+                </div>
+            `;
+            return;
+        }
+
+        const showsHtml = shows.map(show => `
             <div class="add-show-modal-item">
                 <div class="add-show-modal-item-header">
                     ${show.name}
@@ -371,6 +377,9 @@ async function loadShows(searchQuery = '') {
                 </div>
             </div>
         `).join('');
+
+        container.innerHTML = showsHtml + customHtml;
+
     } catch (error) {
         container.innerHTML = `
             <div class="empty-state">
