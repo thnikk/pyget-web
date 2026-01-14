@@ -4,6 +4,7 @@ Anime RSS feed manager with Transmission integration.
 Main entry point for the application.
 """
 import threading
+import argparse
 from flask import Flask
 from flask_cors import CORS
 from database import init_db
@@ -24,6 +25,11 @@ def create_app():
     return app
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Pyget Web')
+    parser.add_argument('--host', type=str, default='0.0.0.0', help='Host to listen on')
+    parser.add_argument('--port', type=int, default=5000, help='Port to listen on')
+    args = parser.parse_args()
+
     # Initialize database
     init_db()
     
@@ -46,4 +52,4 @@ if __name__ == '__main__':
     # Do initial cache update
     threading.Thread(target=update_cached_shows_once, daemon=True).start()
 
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host=args.host, port=args.port)

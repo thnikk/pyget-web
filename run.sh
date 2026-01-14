@@ -44,4 +44,4 @@ fi
 
 # Run the application
 echo "Starting Pyget Web..."
-"$VENV_DIR/bin/python3" app.py
+"$VENV_DIR/bin/python3" app.py "$@"
