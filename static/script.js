@@ -752,5 +752,71 @@ function showNotification(message, type) {
     console.log(`[${type.toUpperCase()}] ${message}`);
 }
 
+async function checkSetup() {
+    try {
+        const response = await fetch(`${API_BASE}/settings`);
+        const settings = await response.json();
+        
+        if (settings.setup_complete !== '1') {
+            document.getElementById('setup-modal').classList.add('visible');
+        } else {
+            loadTrackedShows();
+        }
+    } catch (error) {
+        console.error('Error checking setup:', error);
+        loadTrackedShows();
+    }
+}
+
+document.getElementById('setup-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const data = {
+        download_directory: document.getElementById('setup-download-directory').value,
+        transmission_host: document.getElementById('setup-transmission-host').value,
+        transmission_port: document.getElementById('setup-transmission-port').value,
+        setup_complete: '1'
+    };
+    
+    try {
+        const response = await fetch(`${API_BASE}/settings`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            document.getElementById('setup-modal').classList.remove('visible');
+            showNotification('Setup complete!', 'success');
+            loadTrackedShows();
+        } else {
+            showNotification('Error saving setup settings', 'error');
+        }
+    } catch (error) {
+        showNotification('Error connecting to server', 'error');
+    }
+});
+
+// Modal close
+window.addEventListener('click', (e) => {
+    const addModal = document.getElementById('add-show-modal');
+    const settingsModal = document.getElementById('settings-modal');
+    const sourceModal = document.getElementById('source-modal');
+    const editShowModal = document.getElementById('edit-show-modal');
+
+    if (e.target === addModal) {
+        resetAddShowModal();
+    }
+    if (e.target === settingsModal) {
+        settingsModal.classList.remove('visible');
+    }
+    if (e.target === sourceModal) {
+        sourceModal.classList.remove('visible');
+    }
+    if (e.target === editShowModal) {
+        editShowModal.classList.remove('visible');
+    }
+});
+
 // Initial load
-loadTrackedShows();
+checkSetup();

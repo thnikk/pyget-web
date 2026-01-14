@@ -146,6 +146,10 @@ def init_db():
         INSERT OR IGNORE INTO settings (key, value)
         VALUES ('download_directory', '')
     ''')
+    c.execute('''
+        INSERT OR IGNORE INTO settings (key, value)
+        VALUES ('setup_complete', '0')
+    ''')
 
     # Create index for faster searches
     c.execute('''
