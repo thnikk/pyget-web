@@ -5,7 +5,7 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=%h/Git/pyget-web
-ExecStart=%h/Git/run.sh
+ExecStart=%h/Git/pyget-web/run.sh
 Restart=always
 RestartSec=5
 # Environment=PYTHONUNBUFFERED=1
