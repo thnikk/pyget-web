@@ -22,8 +22,13 @@ from flask_cors import CORS
 app = Flask(__name__, static_folder='static', static_url_path='')
 CORS(app)
 
+# Data directory configuration
+DATA_DIR = os.path.expanduser('~/.local/share/pyget')
+os.makedirs(DATA_DIR, exist_ok=True)
+os.makedirs(os.path.join(DATA_DIR, 'art'), exist_ok=True)
+
 # Database initialization
-DB_PATH = 'anime_tracker.db'
+DB_PATH = os.path.join(DATA_DIR, 'anime_tracker.db')
 
 
 def init_db():
@@ -545,6 +550,12 @@ def serve_static(path):
     return send_from_directory('static', path)
 
 
+@app.route('/art/<path:filename>')
+def serve_art(filename):
+    """Serve artwork from the data directory."""
+    return send_from_directory(os.path.join(DATA_DIR, 'art'), filename)
+
+
 @app.route('/api/profiles/<int:profile_id>', methods=['DELETE', 'PUT'])
 def manage_profile_id(profile_id):
     """Delete or update a feed profile."""
@@ -797,7 +808,7 @@ def upload_show_art(tracked_id):
         show_name = row[0]
         
         # Create art directory
-        art_dir = os.path.join(app.static_folder, 'art')
+        art_dir = os.path.join(DATA_DIR, 'art')
         os.makedirs(art_dir, exist_ok=True)
         
         # Generate filename
