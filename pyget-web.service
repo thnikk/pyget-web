@@ -8,7 +8,7 @@ WorkingDirectory=%h/Git/pyget-web
 ExecStart=%h/Git/pyget-web/run.sh
 Restart=always
 RestartSec=5
-# Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONUNBUFFERED=1
 
 [Install]
 WantedBy=default.target
