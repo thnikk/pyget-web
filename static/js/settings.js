@@ -5,12 +5,16 @@ import { openModal, closeModal, showNotification } from './ui.js';
 export async function loadSettings() {
     try {
         const settings = await api.getSettings();
-
+        
         document.getElementById('download-directory').value = settings.download_directory || '';
         document.getElementById('transmission-host').value =
             settings.transmission_host || 'localhost';
         document.getElementById('transmission-port').value =
             settings.transmission_port || '9091';
+        
+        // Load replacement settings
+        const replacementSettings = await api.getReplacementSettings();
+        document.getElementById('auto-replace-v2').checked = replacementSettings.auto_replace_v2 !== false;
     } catch (error) {
         console.error('Error loading settings:', error);
     }
@@ -21,8 +25,17 @@ export async function handleGeneralSettingsSubmit(e) {
     const data = {
         download_directory: document.getElementById('download-directory').value
     };
+    
+    // Save replacement settings separately
+    const replacementData = {
+        auto_replace_v2: document.getElementById('auto-replace-v2').checked
+    };
+    
     try {
-        await api.saveSettings(data);
+        await Promise.all([
+            api.saveSettings(data),
+            api.saveReplacementSettings(replacementData)
+        ]);
         showNotification('Settings saved', 'success');
         closeModal('settings-modal');
     } catch (error) {

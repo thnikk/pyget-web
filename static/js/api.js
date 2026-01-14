@@ -22,6 +22,15 @@ export const api = {
     }),
     cleanupArtwork: () => request('/settings/artwork/cleanup', { method: 'POST' }),
     
+    getReplacementSettings: () => request('/settings/replacements'),
+    saveReplacementSettings: (data) => request('/settings/replacements', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    }),
+    getReplacementHistory: () => request('/replacements/history'),
+    getPendingReplacements: () => request('/replacements/pending'),
+    
     getProfiles: () => request('/profiles'),
     createProfile: (data) => request('/profiles', {
         method: 'POST',

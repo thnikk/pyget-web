@@ -71,6 +71,17 @@ def init_db():
     except sqlite3.OperationalError:
         pass # Column already exists
 
+    # Add episode metadata columns for v2 replacement logic
+    try:
+        c.execute('ALTER TABLE downloaded_torrents ADD COLUMN episode_number TEXT')
+        c.execute('ALTER TABLE downloaded_torrents ADD COLUMN version INTEGER DEFAULT 1')
+        c.execute('ALTER TABLE downloaded_torrents ADD COLUMN subgroup TEXT')
+        c.execute('ALTER TABLE downloaded_torrents ADD COLUMN replaced_by INTEGER')
+        c.execute('ALTER TABLE downloaded_torrents ADD COLUMN is_deleted BOOLEAN DEFAULT FALSE')
+        print("Added episode metadata columns to downloaded_torrents")
+    except sqlite3.OperationalError:
+        pass # Columns already exist
+
     # Cached shows table for profile feed caching
     c.execute('''
         CREATE TABLE IF NOT EXISTS cached_shows (
@@ -118,6 +129,10 @@ def init_db():
     c.execute('''
         INSERT OR IGNORE INTO settings (key, value)
         VALUES ('setup_complete', '0')
+    ''')
+    c.execute('''
+        INSERT OR IGNORE INTO settings (key, value)
+        VALUES ('auto_replace_v2', '1')
     ''')
 
     # Create index for faster searches

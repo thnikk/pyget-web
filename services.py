@@ -6,7 +6,7 @@ import feedparser
 import transmissionrpc
 from datetime import datetime, timedelta, timezone
 from config import DB_PATH
-from utils import parse_anime_title, build_feed_url
+from utils import parse_anime_title, build_feed_url, parse_episode_info
 
 def get_transmission_client():
     """Connect to Transmission daemon."""
@@ -136,6 +136,25 @@ def check_and_download_torrents():
                         if not torrent_url:
                             continue
 
+                        # Parse episode info for metadata and replacement logic
+                        episode_info = parse_episode_info(entry.title)
+                        
+                        # Check if this is a potential replacement
+                        replacement_candidate = None
+                        if episode_info['episode'] and episode_info['subgroup']:
+                            # Look for existing episodes from same subgroup with lower version
+                            c.execute('''
+                                SELECT id, version FROM downloaded_torrents
+                                WHERE episode_number = ? AND subgroup = ? 
+                                AND is_deleted = FALSE AND tracked_show_id = ?
+                                ORDER BY version DESC
+                            ''', (episode_info['episode'], episode_info['subgroup'], show_id))
+                            
+                            existing = c.fetchone()
+                            if existing and episode_info['version'] > existing['version']:
+                                replacement_candidate = existing['id']
+                                print(f"Found replacement candidate: {entry.title} replaces version {existing['version']}")
+                        
                         # Check if already downloaded
                         c.execute('''
                             SELECT id FROM downloaded_torrents
@@ -161,10 +180,25 @@ def check_and_download_torrents():
                                 c.execute('''
                                     INSERT INTO downloaded_torrents
                                     (tracked_show_id, torrent_url,
-                                     torrent_name, published_at)
-                                    VALUES (?, ?, ?, ?)
-                                ''', (show_id, torrent_url, entry.title, published_at))
+                                     torrent_name, published_at, episode_number,
+                                     version, subgroup)
+                                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                                ''', (show_id, torrent_url, entry.title, published_at,
+                                      episode_info['episode'], episode_info['version'], 
+                                      episode_info['subgroup']))
                                 conn.commit()
+                                
+                                # If this is a replacement, track it for deletion after download completes
+                                if replacement_candidate:
+                                    new_torrent_id = c.lastrowid
+                                    c.execute('''
+                                        UPDATE downloaded_torrents
+                                        SET replaced_by = ?
+                                        WHERE id = ?
+                                    ''', (new_torrent_id, replacement_candidate))
+                                    conn.commit()
+                                    print(f"Scheduled replacement: torrent {replacement_candidate} will be replaced by {new_torrent_id}")
+                                    
                             except sqlite3.IntegrityError:
                                 # Already in database, skip
                                 pass
@@ -367,3 +401,98 @@ def cache_single_profile(profile):
         
     except Exception as e:
         print(f"Error caching profile {name}: {e}")
+
+def get_replacement_setting():
+    """Check if automatic v2 replacement is enabled."""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute('SELECT value FROM settings WHERE key = ?', ('auto_replace_v2',))
+        result = c.fetchone()
+        conn.close()
+        return result and result[0] == '1'
+    except:
+        return True  # Default to enabled
+
+def monitor_downloads_for_replacement():
+    """
+    Background task to monitor completed downloads and perform replacements.
+    Runs every minute to check for torrents that have completed downloading.
+    """
+    print("Starting download monitor for v2 replacements...")
+    
+    while True:
+        try:
+            if not get_replacement_setting():
+                time.sleep(60)
+                continue
+                
+            conn = sqlite3.connect(DB_PATH)
+            c = conn.cursor()
+            
+            # Find torrents that are marked to be replaced
+            c.execute('''
+                SELECT dt.id, dt.torrent_url, dt.torrent_name, dt.replaced_by
+                FROM downloaded_torrents dt
+                WHERE dt.replaced_by IS NOT NULL AND dt.is_deleted = FALSE
+            ''')
+            
+            torrents_to_replace = c.fetchall()
+            
+            if torrents_to_replace:
+                tc, _ = get_transmission_client()
+                if tc:
+                    for torrent_data in torrents_to_replace:
+                        old_torrent_id, old_url, old_name, replacement_id = torrent_data
+                        
+                        # Check if replacement torrent is complete
+                        c.execute('''
+                            SELECT dt.torrent_url, dt.torrent_name
+                            FROM downloaded_torrents dt
+                            WHERE dt.id = ?
+                        ''', (replacement_id,))
+                        
+                        replacement_info = c.fetchone()
+                        
+                        if replacement_info:
+                            replacement_url, replacement_name = replacement_info
+                            
+                            # Get torrent status from Transmission
+                            try:
+                                torrents = tc.get_torrents()
+                                replacement_torrent = None
+                                old_torrent = None
+                                
+                                for torrent in torrents:
+                                    if torrent.url == replacement_url:
+                                        replacement_torrent = torrent
+                                    elif torrent.url == old_url:
+                                        old_torrent = torrent
+                                
+                                # If replacement is complete and old torrent exists
+                                if (replacement_torrent and replacement_torrent.progress == 100 and 
+                                    old_torrent):
+                                    print(f"Replacing {old_name} with {replacement_name}")
+                                    
+                                    # Remove old torrent from Transmission
+                                    tc.remove_torrent(old_torrent, delete_data=True)
+                                    
+                                    # Mark as deleted in database
+                                    c.execute('''
+                                        UPDATE downloaded_torrents
+                                        SET is_deleted = TRUE
+                                        WHERE id = ?
+                                    ''', (old_torrent_id,))
+                                    conn.commit()
+                                    
+                                    print(f"Successfully replaced torrent {old_torrent_id}")
+                                    
+                            except Exception as e:
+                                print(f"Error removing old torrent {old_torrent_id}: {e}")
+            
+            conn.close()
+            
+        except Exception as e:
+            print(f"Error in replacement monitor: {e}")
+            
+        time.sleep(60)  # Check every minute

@@ -12,7 +12,8 @@ from routes import api_bp
 from services import (
     check_and_download_torrents,
     update_cached_shows,
-    update_cached_shows_once
+    update_cached_shows_once,
+    monitor_downloads_for_replacement
 )
 
 def create_app():
@@ -51,5 +52,12 @@ if __name__ == '__main__':
 
     # Do initial cache update
     threading.Thread(target=update_cached_shows_once, daemon=True).start()
+
+    # Start replacement monitor thread
+    replacement_thread = threading.Thread(
+        target=monitor_downloads_for_replacement,
+        daemon=True
+    )
+    replacement_thread.start()
 
     app.run(debug=True, host=args.host, port=args.port)

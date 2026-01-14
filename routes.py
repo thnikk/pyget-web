@@ -566,3 +566,119 @@ def cleanup_artwork():
         return jsonify({'count': deleted_count})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@api_bp.route('/api/settings/replacements', methods=['GET', 'PUT'])
+def manage_replacement_settings():
+    """Get or update replacement settings."""
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        
+        if request.method == 'GET':
+            c.execute('SELECT value FROM settings WHERE key = ?', ('auto_replace_v2',))
+            result = c.fetchone()
+            enabled = result and result[0] == '1'
+            conn.close()
+            return jsonify({'auto_replace_v2': enabled})
+        
+        elif request.method == 'PUT':
+            data = request.json
+            enabled = data.get('auto_replace_v2', True)
+            value = '1' if enabled else '0'
+            
+            c.execute('''
+                INSERT OR REPLACE INTO settings (key, value)
+                VALUES ('auto_replace_v2', ?)
+            ''', (value,))
+            conn.commit()
+            conn.close()
+            return jsonify({'auto_replace_v2': enabled})
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@api_bp.route('/api/replacements/history')
+def get_replacement_history():
+    """Get history of torrent replacements."""
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        
+        c.execute('''
+            SELECT 
+                dt_old.torrent_name as old_name,
+                dt_old.episode_number as episode,
+                dt_old.subgroup as subgroup,
+                dt_old.version as old_version,
+                dt_new.torrent_name as new_name,
+                dt_new.version as new_version,
+                dt_new.added_at as replacement_date
+            FROM downloaded_torrents dt_old
+            JOIN downloaded_torrents dt_new ON dt_old.replaced_by = dt_new.id
+            WHERE dt_old.is_deleted = TRUE
+            ORDER BY dt_new.added_at DESC
+            LIMIT 50
+        ''')
+        
+        replacements = []
+        for row in c.fetchall():
+            replacements.append({
+                'old_name': row['old_name'],
+                'episode': row['episode'],
+                'subgroup': row['subgroup'],
+                'old_version': row['old_version'],
+                'new_name': row['new_name'],
+                'new_version': row['new_version'],
+                'replacement_date': row['replacement_date']
+            })
+        
+        conn.close()
+        return jsonify({'replacements': replacements})
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@api_bp.route('/api/replacements/pending')
+def get_pending_replacements():
+    """Get torrents that are pending replacement (downloaded but not yet deleted)."""
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        
+        c.execute('''
+            SELECT 
+                dt_old.id as old_id,
+                dt_old.torrent_name as old_name,
+                dt_old.episode_number as episode,
+                dt_old.subgroup as subgroup,
+                dt_old.version as old_version,
+                dt_new.torrent_name as new_name,
+                dt_new.version as new_version,
+                dt_new.added_at as added_date
+            FROM downloaded_torrents dt_old
+            JOIN downloaded_torrents dt_new ON dt_old.replaced_by = dt_new.id
+            WHERE dt_old.is_deleted = FALSE
+            ORDER BY dt_new.added_at DESC
+        ''')
+        
+        pending = []
+        for row in c.fetchall():
+            pending.append({
+                'old_id': row['old_id'],
+                'old_name': row['old_name'],
+                'episode': row['episode'],
+                'subgroup': row['subgroup'],
+                'old_version': row['old_version'],
+                'new_name': row['new_name'],
+                'new_version': row['new_version'],
+                'added_date': row['added_date']
+            })
+        
+        conn.close()
+        return jsonify({'pending': pending})
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
