@@ -2,7 +2,7 @@
 
 A web interface for managing anime RSS feeds and automatically downloading new episodes via Transmission.
 
-![Screenshot](assets/screenshot)
+![Screenshot](assets/screenshot.png)
 
 ## Features
 
