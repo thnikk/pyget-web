@@ -479,13 +479,20 @@ async function loadTrackedShows() {
         }
 
         content += tracked.map(show => `
-            <div class="show-card" onclick='openEditShowModal(${JSON.stringify(show)})'>
+            <div class="show-card" 
+                 onclick='openEditShowModal(${JSON.stringify(show)})'
+                 ondragover="event.preventDefault(); this.classList.add('drag-over');"
+                 ondragleave="this.classList.remove('drag-over');"
+                 ondrop="handleShowDrop(event, ${show.id})">
                 <div class="show-card-badge"
                      style="background-color: ${show.color || '#88c0d0'}">
                     ${show.profile_name}
                 </div>
                 <div class="show-card-image">
-                    ${show.show_name.substring(0, 2).toUpperCase()}
+                    ${show.image_path ? 
+                        `<img src="${show.image_path}" alt="${escapeHtml(show.show_name)}" style="width: 100%; height: 100%; object-fit: cover;">` :
+                        show.show_name.substring(0, 2).toUpperCase()
+                    }
                 </div>
                 <div class="show-card-content">
                     <div class="show-card-title">${show.show_name}</div>
@@ -499,6 +506,40 @@ async function loadTrackedShows() {
                 <p>Error loading tracked shows</p>
             </div>
         `;
+    }
+}
+
+async function handleShowDrop(e, showId) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.classList.remove('drag-over');
+
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        const file = files[0];
+        if (!file.type.startsWith('image/')) {
+            showNotification('Please drop an image file', 'error');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch(`${API_BASE}/tracked/${showId}/art`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                showNotification('Artwork updated', 'success');
+                loadTrackedShows();
+            } else {
+                showNotification('Error updating artwork', 'error');
+            }
+        } catch (error) {
+            showNotification('Error uploading file', 'error');
+        }
     }
 }
 

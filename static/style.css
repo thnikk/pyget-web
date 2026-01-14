@@ -487,6 +487,12 @@ body {
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
 }
 
+.show-card.drag-over {
+    border-color: var(--nord8);
+    box-shadow: 0 0 15px var(--nord8);
+    transform: scale(1.02);
+}
+
 .show-card-remove {
     position: absolute;
     top: 10px;

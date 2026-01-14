@@ -8,6 +8,7 @@ import re
 import sqlite3
 import threading
 import time
+import base64
 from datetime import datetime, timedelta
 from typing import Optional
 from urllib.parse import urlencode
@@ -60,15 +61,17 @@ def init_db():
             added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             season_name TEXT,
             max_age INTEGER,
+            image_path TEXT,
             FOREIGN KEY (profile_id) REFERENCES feed_profiles (id)
         )
     ''')
 
-    # Add season_name and max_age columns if they don't exist
+    # Add season_name, max_age, and image_path columns if they don't exist
     try:
         c.execute('ALTER TABLE tracked_shows ADD COLUMN season_name TEXT')
         c.execute('ALTER TABLE tracked_shows ADD COLUMN max_age INTEGER')
-        print("Added season_name and max_age columns to tracked_shows")
+        c.execute('ALTER TABLE tracked_shows ADD COLUMN image_path TEXT')
+        print("Added columns to tracked_shows")
     except sqlite3.OperationalError:
         pass # Columns already exist
 
@@ -701,7 +704,7 @@ def manage_tracked_shows():
     if request.method == 'GET':
         c.execute('''
             SELECT ts.id, ts.show_name, ts.feed_url, ts.profile_id, ts.added_at,
-                   ts.season_name, ts.max_age,
+                   ts.season_name, ts.max_age, ts.image_path,
                    fp.name as profile_name, fp.base_url, fp.uploader, fp.quality, fp.color
             FROM tracked_shows ts
             LEFT JOIN feed_profiles fp ON ts.profile_id = fp.id
@@ -717,6 +720,7 @@ def manage_tracked_shows():
                 'added_at': row['added_at'],
                 'season_name': row['season_name'],
                 'max_age': row['max_age'],
+                'image_path': row['image_path'],
                 'profile_name': row['profile_name'],
                 'base_url': row['base_url'],
                 'uploader': row['uploader'],
@@ -770,6 +774,54 @@ def manage_tracked_shows():
             'status': 'tracked',
             'feed_url': feed_url
         }), 201
+
+
+@app.route('/api/tracked/<int:tracked_id>/art', methods=['POST'])
+def upload_show_art(tracked_id):
+    """Upload artwork for a tracked show."""
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+    
+    if file:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute('SELECT show_name FROM tracked_shows WHERE id = ?', (tracked_id,))
+        row = c.fetchone()
+        if not row:
+            conn.close()
+            return jsonify({'error': 'Show not found'}), 404
+        
+        show_name = row[0]
+        
+        # Create art directory
+        art_dir = os.path.join(app.static_folder, 'art')
+        os.makedirs(art_dir, exist_ok=True)
+        
+        # Generate filename
+        # User requested base64-encoded name
+        ext = os.path.splitext(file.filename)[1]
+        if not ext:
+            ext = '.jpg' # Default fallback
+            
+        safe_name = base64.urlsafe_b64encode(show_name.encode()).decode()
+        # Remove padding characters to make it cleaner
+        safe_name = safe_name.rstrip('=')
+        
+        filename = f"{safe_name}{ext}"
+        filepath = os.path.join(art_dir, filename)
+        
+        file.save(filepath)
+        
+        # Save relative path to DB
+        rel_path = f"art/{filename}"
+        c.execute('UPDATE tracked_shows SET image_path = ? WHERE id = ?', (rel_path, tracked_id))
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'image_path': rel_path})
 
 
 @app.route('/api/tracked/<int:tracked_id>', methods=['DELETE', 'PUT'])
