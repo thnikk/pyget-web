@@ -1,6 +1,17 @@
 # Pyget Web
 
-A web interface for managing nyaa rss feeds.
+A web interface for managing anime RSS feeds and automatically downloading new episodes via Transmission.
+
+## Features
+
+- Adds shows from RSS feeds
+- Drag-and-drop artwork into show cards to set artwork
+- Release calendar to show when episodes air (based on previous downloads)
+
+## Prerequisites
+
+- Python 3.8+
+- Transmission daemon running with RPC enabled.
 
 ## Usage
 
@@ -14,4 +25,4 @@ To install as a systemd user service:
 ./run.sh --install
 ```
 
-See [readme-2.md](readme-2.md) for more details.
+Once it's running, open your browser and navigate to `http://localhost:5000`. If you want to use a different port, you can use the argument `--port` when launching the server.
