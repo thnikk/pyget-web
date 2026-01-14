@@ -464,9 +464,20 @@ document.querySelector('.close-edit-show').addEventListener('click', () => {
 });
 
 async function trackShow(showName, profileId) {
-    document.getElementById('add-show-name').value = showName;
+    let finalShowName = showName;
+    let finalSeason = 'Season 01';
+
+    // Parse season from title if it ends with "Season #" or "S#"
+    const seasonMatch = showName.match(/\s+(Season\s+(\d+)|S(\d+))$/i);
+    if (seasonMatch) {
+        const seasonNum = seasonMatch[2] || seasonMatch[3];
+        finalShowName = showName.substring(0, seasonMatch.index).trim();
+        finalSeason = `Season ${seasonNum.padStart(2, '0')}`;
+    }
+
+    document.getElementById('add-show-name').value = finalShowName;
     document.getElementById('add-show-profile-id').value = profileId;
-    document.getElementById('add-show-season').value = 'Season 01';
+    document.getElementById('add-show-season').value = finalSeason;
     document.getElementById('add-show-max-age').value = '30';
 
 
