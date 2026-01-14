@@ -17,6 +17,16 @@ A web interface for managing anime RSS feeds and automatically downloading new e
 
 ## Usage
 
+Clone the repo
+```bash
+git clone https://github.com/thnikk/pyget-web
+```
+
+Cd into the repo
+```bash
+cd pyget-web
+```
+
 Run the launcher script to start the app:
 ```bash
 ./run.sh
