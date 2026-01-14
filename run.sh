@@ -27,17 +27,31 @@ check_for_updates() {
 
     echo "Checking for updates..."
 
-    # Get latest release from GitHub API
+    # Get latest release from GitHub API (fallback to tags if no releases)
     local latest_release
+    local latest_tag="null"
+    
+    # First try releases endpoint
     latest_release=$(curl -sL "https://api.github.com/repos/thnikk/pyget-web/releases/latest" 2>/dev/null)
+    
+    # If no releases found, check tags instead
+    if [ "$latest_release" = "" ] || echo "$latest_release" | grep -q '"message":"Not Found"'; then
+        echo "No releases found, checking tags..."
+        latest_release=$(curl -sL "https://api.github.com/repos/thnikk/pyget-web/tags" 2>/dev/null)
+        latest_tag=$(echo "$latest_release" | jq -r ".[0].name" 2>/dev/null)
+    fi
 
     # Parse tag_name with fallback methods
-    local latest_tag="null"
     if command -v jq >/dev/null 2>&1; then
-        latest_tag=$(echo "$latest_release" | jq -r ".tag_name" 2>/dev/null)
+        # Use latest_tag if already set from tags, otherwise try releases
+        if [ "$latest_tag" = "null" ] || [ "$latest_tag" = "" ]; then
+            latest_tag=$(echo "$latest_release" | jq -r ".tag_name" 2>/dev/null)
+        fi
     else
         # Fallback to sed/grep if jq not available
-        latest_tag=$(echo "$latest_release" | grep -o '"tag_name": *"[^"]*"' | sed 's/.*"tag_name": *"\([^"]*\)".*/\1/' 2>/dev/null)
+        if [ "$latest_tag" = "" ]; then
+            latest_tag=$(echo "$latest_release" | grep -o '"tag_name": *"[^"]*"' | sed 's/.*"tag_name": *"\([^"]*\)".*/\1/' 2>/dev/null)
+        fi
     fi
 
     # Get current local tag
@@ -49,18 +63,28 @@ check_for_updates() {
         echo "New release available: $latest_tag (current: $current_tag)"
         echo "Updating automatically..."
 
-        # Update the repository
+        # Update the repository - ensure we have all tags and can checkout the specific tag
         git fetch origin --tags >/dev/null 2>&1
+        
+        # Check if the tag exists locally or fetch it
+        if ! git rev-parse --verify "refs/tags/$latest_tag" >/dev/null 2>&1; then
+            echo "Tag $latest_tag not found locally, fetching..."
+            git fetch origin tag "$latest_tag" >/dev/null 2>&1
+        fi
+        
         if git checkout "$latest_tag" >/dev/null 2>&1; then
-            echo "Updated to $latest_tag!"
-            echo "Restarting with updated version..."
-            exec "$0" "$@"  # Restart with new version
-        elif git pull origin main >/dev/null 2>&1; then
-            echo "Updated to latest main branch!"
+            echo "Updated to tagged release $latest_tag!"
             echo "Restarting with updated version..."
             exec "$0" "$@"  # Restart with new version
         else
-            echo "Failed to update, continuing with current version..."
+            echo "Failed to checkout tag $latest_tag, attempting pull..."
+            if git pull origin main >/dev/null 2>&1; then
+                echo "Updated to latest main branch!"
+                echo "Restarting with updated version..."
+                exec "$0" "$@"  # Restart with new version
+            else
+                echo "Failed to update, continuing with current version..."
+            fi
         fi
     else
         echo "Running latest version: $current_tag"
