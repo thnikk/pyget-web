@@ -85,12 +85,13 @@ document.getElementById('clear-search-btn').onclick = () => {
 };
 
 // Modal close on outside click
-window.addEventListener('click', (e) => {
-    if (e.target.id === 'add-show-modal') resetAddShowModal();
-    else if (e.target.id === 'settings-modal') closeModal('settings-modal');
-    else if (e.target.id === 'source-modal') closeModal('source-modal');
-    else if (e.target.id === 'edit-show-modal') closeModal('edit-show-modal');
-});
+// DO NOT UNCOMMENT, VERY ANNOYING
+// window.addEventListener('click', (e) => {
+//     if (e.target.id === 'add-show-modal') resetAddShowModal();
+//     else if (e.target.id === 'settings-modal') closeModal('settings-modal');
+//     else if (e.target.id === 'source-modal') closeModal('source-modal');
+//     else if (e.target.id === 'edit-show-modal') closeModal('edit-show-modal');
+// });
 
 // Initial load
 checkSetup();
