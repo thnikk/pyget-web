@@ -985,6 +985,48 @@ form .btn {
     flex-direction: column;
 }
 
+.list-container {
+    gap: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+#shows-list-parent {
+    position: relative;
+    max-height: 400px;
+}
+
+#shows-list {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+#shows-list-parent::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 20px;
+    background: linear-gradient(to bottom, var(--nord0) 0%, transparent 100%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+#shows-list-parent::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 20px;
+    background: linear-gradient(to top, var(--nord0) 0%, transparent 100%);
+    z-index: 1;
+    pointer-events: none;
+}
+
 /* New styles for add show modal items */
 .add-show-modal-item {
     background: var(--nord1);
