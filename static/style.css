@@ -296,6 +296,25 @@ button {
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    width: auto;
+    min-width: auto;
+    max-width: none;
+    flex-shrink: 0;
+}
+
+form .btn {
+    width: auto !important;
+    min-width: auto !important;
+    max-width: none !important;
+    flex-shrink: 0 !important;
+}
+
+.form-container .btn {
+    width: auto !important;
+    min-width: auto !important;
+    max-width: none !important;
+    flex-shrink: 0 !important;
+    align-self: flex-start !important;
 }
 
 .btn .material-icons {
@@ -341,9 +360,8 @@ button {
 }
 
 .btn-primary:hover {
-    background: var(--nord9);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(136, 192, 208, 0.4);
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
 .btn-danger {
@@ -352,8 +370,8 @@ button {
 }
 
 .btn-danger:hover {
-    filter: brightness(1.2);
-    transform: translateY(-1px);
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
 .btn-success {
@@ -362,8 +380,8 @@ button {
 }
 
 .btn-success:hover {
-    filter: brightness(1.2);
-    transform: translateY(-2px);
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
 .btn-secondary {
@@ -372,8 +390,8 @@ button {
 }
 
 .btn-secondary:hover {
-    filter: brightness(1.2);
-    transform: translateY(-1px);
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 .grid-container {
     display: grid;
@@ -489,7 +507,7 @@ button {
 .source-badge:hover {
     filter: brightness(1.15);
     border-color: rgba(255, 255, 255, 0.3);
-    transform: translateY(-2px);
+    transform: scale(1.05);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
@@ -969,18 +987,18 @@ button {
 
 /* New styles for add show modal items */
 .add-show-modal-item {
-    background: var(--nord0);
+    background: var(--nord1);
+    border: 2px solid var(--nord3);
     padding: 15px;
     border-radius: 8px;
-    border: 2px solid var(--nord3);
+    /* cursor: pointer; */
     transition: all 0.3s ease;
-    cursor: pointer;
 }
 
-.add-show-modal-item:hover {
-    border-color: var(--nord8);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
-}
+/* .add-show-modal-item:hover { */
+/*     border-color: var(--nord8); */
+/*     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4); */
+/* } */
 
 .add-show-modal-item-header {
     font-size: 1.1rem;
