@@ -993,11 +993,11 @@ form .btn {
 
 #shows-list-parent {
     position: relative;
-    max-height: 400px;
+    max-height: 60vh;
 }
 
 #shows-list {
-    max-height: 400px;
+    max-height: 60vh;
     overflow-y: auto;
     padding-top: 20px;
     padding-bottom: 20px;
