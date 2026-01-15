@@ -231,7 +231,9 @@ def manage_tracked_shows():
             return jsonify({'error': 'Profile not found'}), 404
 
         # Handle both old and new schema
-        if len(profile) >= 7:
+        if len(profile) >= 8:
+            _, _, base_url, uploader, quality, color, _, _ = profile
+        elif len(profile) >= 7:
             _, _, base_url, uploader, quality, color, _ = profile
         else:
             _, _, base_url, uploader, quality, _ = profile
