@@ -2,7 +2,9 @@ import { loadSources, handleSourceSubmit } from './sources.js';
 import { loadTrackedShows, loadShows, handleAddShowDetailsSubmit, handleEditShowSubmit, resetAddShowModal } from './shows.js';
 import { loadSchedule } from './schedule.js';
 import { loadSettings, handleGeneralSettingsSubmit, handleTransmissionSettingsSubmit, handleCleanupArtwork, checkSetup, handleSetupSubmit, handlePathInput, handlePathKeydown } from './settings.js';
-import { closeModal } from './ui.js';
+import { initLogTab } from './logs.js';
+import { closeModal, showNotification } from './ui.js';
+import { api } from './api.js';
 
 // Tab navigation
 document.querySelectorAll('.nav-tab').forEach(button => {
@@ -21,6 +23,7 @@ document.querySelectorAll('.nav-tab').forEach(button => {
         if (tabName === 'sources') loadSources();
         else if (tabName === 'shows') loadTrackedShows();
         else if (tabName === 'schedule') loadSchedule();
+        else if (tabName === 'log') initLogTab();
     });
 });
 
@@ -44,6 +47,16 @@ document.getElementById('settings-btn').onclick = () => {
 document.getElementById('general-settings-form').onsubmit = handleGeneralSettingsSubmit;
 document.getElementById('transmission-form').onsubmit = handleTransmissionSettingsSubmit;
 document.getElementById('cleanup-artwork-btn').onclick = handleCleanupArtwork;
+
+// Test notification button
+document.getElementById('test-notification-btn').onclick = async () => {
+    try {
+        await api.testNotification();
+        showNotification('Test notification sent!', 'success');
+    } catch (error) {
+        showNotification('Failed to send test notification', 'error');
+    }
+};
 document.getElementById('source-form').onsubmit = handleSourceSubmit;
 document.getElementById('add-show-details-form').onsubmit = handleAddShowDetailsSubmit;
 document.getElementById('edit-show-form').onsubmit = handleEditShowSubmit;

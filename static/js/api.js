@@ -69,5 +69,33 @@ export const api = {
     
     getSchedule: () => request('/schedule'),
     
-    getPathSuggestions: (path) => request(`/utils/path-suggestions?path=${encodeURIComponent(path)}`)
+    getPathSuggestions: (path) => request(`/utils/path-suggestions?path=${encodeURIComponent(path)}`),
+    
+    // Notification methods
+    getNotificationSettings: () => request('/notifications/settings'),
+    saveNotificationSettings: (data) => request('/notifications/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    }),
+    getNotificationLogs: (limit = 100, offset = 0) => {
+        let url = `/notifications/logs?limit=${limit}`;
+        if (offset > 0) url += `&offset=${offset}`;
+        return request(url);
+    },
+    clearNotificationLogs: () => request('/notifications/logs/clear', { method: 'POST' }),
+    testNotification: () => request('/notifications/test', { method: 'POST' }),
+    
+    // Generic methods
+    get: (path) => request(path),
+    post: (path, data) => request(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    }),
+    put: (path, data) => request(path, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
 };

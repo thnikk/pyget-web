@@ -7,6 +7,7 @@ import transmissionrpc
 from datetime import datetime, timedelta, timezone
 from config import DB_PATH
 from utils import parse_anime_title, build_feed_url, parse_episode_info
+from notifications import send_torrent_notification
 
 def get_transmission_client():
     """Connect to Transmission daemon."""
@@ -200,6 +201,9 @@ def check_and_download_torrents():
                             tc.add_torrent(torrent_url, download_dir=download_path)
                             print(f"Added to Transmission: {entry.title}")
 
+                            # Send notification
+                            send_torrent_notification(entry.title, show_name, episode_info)
+
                             # Only record if successfully added
                             try:
                                 c.execute('''
@@ -387,6 +391,9 @@ def check_single_show(tracked_show_id):
 
                 tc.add_torrent(torrent_url, download_dir=download_path)
                 print(f"Added to Transmission: {entry.title}")
+
+                # Send notification
+                send_torrent_notification(entry.title, show_name)
 
                 # Only record if successfully added
                 try:

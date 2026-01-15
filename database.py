@@ -142,6 +142,22 @@ def init_db():
         INSERT OR IGNORE INTO settings (key, value)
         VALUES ('auto_replace_v2', '1')
     ''')
+    c.execute('''
+        INSERT OR IGNORE INTO settings (key, value)
+        VALUES ('notifications_enabled', '0')
+    ''')
+
+    # Notifications log table
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS notification_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            message TEXT NOT NULL,
+            type TEXT DEFAULT 'info',
+            torrent_name TEXT,
+            show_name TEXT
+        )
+    ''')
 
     # Create index for faster searches
     c.execute('''

@@ -8,6 +8,7 @@ from config import DB_PATH, DATA_DIR
 from database import get_db_connection
 from utils import build_feed_url, extract_episode_number, parse_anime_title
 from services import check_single_show, cache_single_profile, get_transmission_client
+from notifications import send_test_notification
 
 api_bp = Blueprint('api', __name__)
 
@@ -684,6 +685,117 @@ def get_pending_replacements():
         
         conn.close()
         return jsonify({'pending': pending})
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@api_bp.route('/api/notifications/settings', methods=['GET', 'PUT'])
+def manage_notification_settings():
+    """Get or update notification settings."""
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        
+        if request.method == 'GET':
+            c.execute('SELECT value FROM settings WHERE key = ?', ('notifications_enabled',))
+            enabled_row = c.fetchone()
+            enabled = enabled_row[0] == '1' if enabled_row else False
+            
+            conn.close()
+            return jsonify({
+                'notifications_enabled': enabled
+            })
+        
+        elif request.method == 'PUT':
+            data = request.json
+            enabled = data.get('notifications_enabled', False)
+            
+            enabled_value = '1' if enabled else '0'
+            
+            c.execute('''
+                INSERT OR REPLACE INTO settings (key, value)
+                VALUES ('notifications_enabled', ?)
+            ''', (enabled_value,))
+            
+            conn.commit()
+            conn.close()
+            return jsonify({
+                'notifications_enabled': enabled
+            })
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@api_bp.route('/api/notifications/test', methods=['POST'])
+def test_notification():
+    """Send a test notification."""
+    try:
+        success, message = send_test_notification()
+        if success:
+            return jsonify({'message': message})
+        else:
+            return jsonify({'error': message}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@api_bp.route('/api/notifications/logs', methods=['GET'])
+def get_notification_logs():
+    """Get notification history."""
+    try:
+        limit = request.args.get('limit', 100, type=int)
+        offset = request.args.get('offset', 0, type=int)
+        
+        conn = get_db_connection()
+        c = conn.cursor()
+        
+        c.execute('''
+            SELECT id, timestamp, message, type, torrent_name, show_name
+            FROM notification_log
+            ORDER BY timestamp DESC
+            LIMIT ? OFFSET ?
+        ''', (limit, offset))
+        
+        logs = []
+        for row in c.fetchall():
+            logs.append({
+                'id': row['id'],
+                'timestamp': row['timestamp'],
+                'message': row['message'],
+                'type': row['type'],
+                'torrent_name': row['torrent_name'],
+                'show_name': row['show_name']
+            })
+        
+        # Get total count for pagination
+        c.execute('SELECT COUNT(*) FROM notification_log')
+        total_count = c.fetchone()[0]
+        
+        conn.close()
+        
+        return jsonify({
+            'logs': logs,
+            'total': total_count,
+            'limit': limit,
+            'offset': offset
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@api_bp.route('/api/notifications/logs/clear', methods=['POST'])
+def clear_notification_logs():
+    """Clear all notification logs."""
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        c.execute('DELETE FROM notification_log')
+        conn.commit()
+        conn.close()
+        return jsonify({'message': 'Notification logs cleared'})
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500

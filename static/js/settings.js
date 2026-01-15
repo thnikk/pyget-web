@@ -15,6 +15,10 @@ export async function loadSettings() {
         // Load replacement settings
         const replacementSettings = await api.getReplacementSettings();
         document.getElementById('auto-replace-v2').checked = replacementSettings.auto_replace_v2 !== false;
+        
+        // Load notification settings
+        const notificationSettings = await api.getNotificationSettings();
+        document.getElementById('notifications-enabled').checked = notificationSettings.notifications_enabled === true;
     } catch (error) {
         console.error('Error loading settings:', error);
     }
@@ -31,10 +35,16 @@ export async function handleGeneralSettingsSubmit(e) {
         auto_replace_v2: document.getElementById('auto-replace-v2').checked
     };
     
+    // Save notification settings
+    const notificationData = {
+        notifications_enabled: document.getElementById('notifications-enabled').checked
+    };
+    
     try {
         await Promise.all([
             api.saveSettings(data),
-            api.saveReplacementSettings(replacementData)
+            api.saveReplacementSettings(replacementData),
+            api.saveNotificationSettings(notificationData)
         ]);
         showNotification('Settings saved', 'success');
         closeModal('settings-modal');
