@@ -1051,7 +1051,7 @@ form .btn {
 
 /* Overlay Scrollbar */
 #shows-list {
-    scrollbar-width: thin;
+    /* scrollbar-width: thin; */
     scrollbar-color: var(--nord3) transparent;
 }
 
