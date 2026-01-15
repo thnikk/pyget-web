@@ -1,6 +1,12 @@
 import { api } from './api.js';
 import { formatDate, escapeHtml } from './ui.js';
 
+// Helper function to truncate show name with ellipsis
+function truncateShowName(showName, maxLength = 20) {
+    if (showName.length <= maxLength) return showName;
+    return showName.substring(0, maxLength - 3) + '...';
+}
+
 export async function loadSchedule() {
     const grid = document.getElementById('calendar-grid');
     const upcomingContainer = document.getElementById('upcoming-list');
@@ -44,7 +50,8 @@ export async function loadSchedule() {
                     if (rel.release_date.startsWith(dateStr)) {
                         eventsHtml += `
                             <div class="calendar-event downloaded" style="border-left-color: ${show.color || 'var(--nord8)'}" title="${rel.torrent_name}">
-                                ${show.show_name} ${rel.episode ? ` - ${rel.episode}` : ''}
+                                <div class="event-title">${truncateShowName(show.show_name)}</div>
+                                ${rel.episode ? `<div class="episode-number">${rel.episode}</div>` : ''}
                             </div>
                         `;
                     }
@@ -56,7 +63,8 @@ export async function loadSchedule() {
                         if (pred.date.startsWith(dateStr)) {
                             eventsHtml += `
                                 <div class="calendar-event predicted" style="border-left-color: ${show.color || 'var(--nord8)'}" title="Predicted: ${show.show_name} - ${pred.episode}">
-                                    ${show.show_name} - ${pred.episode} (est)
+                                    <div class="event-title">${truncateShowName(show.show_name)}</div>
+                                    <div class="episode-number">${pred.episode}</div>
                                 </div>
                             `;
                         }
@@ -107,7 +115,7 @@ export async function loadSchedule() {
                             }
                         </div>
                         <div class="upcoming-card-info">
-                            <div class="upcoming-card-title">${item.show_name} ${item.next_episode ? ` - ${item.next_episode}` : ''}</div>
+                            <div class="upcoming-card-title">${truncateShowName(item.show_name)} ${item.next_episode ? ` - ${item.next_episode}` : ''}</div>
                             <div class="upcoming-card-date ${isOverdue ? 'overdue' : ''}">
                                 ${formatDate(item.next_release)} ${isOverdue ? '(Expected)' : ''}
                             </div>

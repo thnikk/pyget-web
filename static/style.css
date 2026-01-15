@@ -733,10 +733,27 @@ button {
     border-radius: 4px;
     background: var(--nord2);
     color: var(--nord6);
+    overflow: hidden;
+    border-left: 3px solid var(--nord8);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.event-title {
+    flex: 1;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    border-left: 3px solid var(--nord8);
+    min-width: 0;
+}
+
+.episode-number {
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
+    padding-left: 6px;
+    white-space: nowrap;
+    font-weight: 600;
+    flex-shrink: 0;
 }
 
 .calendar-event.predicted {
@@ -749,6 +766,10 @@ button {
     color: var(--nord0);
     border-left-color: rgba(0, 0, 0, 0.2) !important;
     font-weight: 600;
+}
+
+.calendar-event.downloaded .episode-number {
+    border-left-color: rgba(0, 0, 0, 0.3);
 }
 
 .upcoming-container {
