@@ -68,6 +68,7 @@ export const api = {
     }),
     
     getSchedule: () => request('/schedule'),
+    getDownloaded: () => request('/downloaded'),
     
     getPathSuggestions: (path) => request(`/utils/path-suggestions?path=${encodeURIComponent(path)}`)
 };

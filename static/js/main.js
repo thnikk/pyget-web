@@ -1,6 +1,7 @@
 import { loadSources, handleSourceSubmit } from './sources.js';
 import { loadTrackedShows, loadShows, handleAddShowDetailsSubmit, handleEditShowSubmit, resetAddShowModal } from './shows.js';
 import { loadSchedule } from './schedule.js';
+import { loadDownloaded } from './downloaded.js';
 import { loadSettings, handleGeneralSettingsSubmit, handleTransmissionSettingsSubmit, handleCleanupArtwork, checkSetup, handleSetupSubmit, handlePathInput, handlePathKeydown } from './settings.js';
 import { closeModal } from './ui.js';
 
@@ -21,6 +22,7 @@ document.querySelectorAll('.nav-tab').forEach(button => {
         if (tabName === 'sources') loadSources();
         else if (tabName === 'shows') loadTrackedShows();
         else if (tabName === 'schedule') loadSchedule();
+        else if (tabName === 'downloaded') loadDownloaded();
     });
 });
 

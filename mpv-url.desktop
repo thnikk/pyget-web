@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=MPV URL Handler
+Exec=/home/thnikk/Development/Python/pyget-web/mpv-launcher.sh %U
+Terminal=false
+NoDisplay=true
+MimeType=x-scheme-handler/mpv;
+Icon=mpv

@@ -36,7 +36,8 @@ def build_feed_url(base_url: str, uploader: str = None,
 def extract_episode_number(title: str) -> Optional[str]:
     """Extract episode number from anime title format."""
     # Expected: [SubGroup] Show name - 01 (quality) [id].mkv
-    match = re.search(r'-\s*(\d+)', title)
+    # Handle various formats: S3 - 14, - 14, Episode 14, 03v2, etc.
+    match = re.search(r'(?:[Ss]\d+\s*-\s*|-\s*|episode\s*)(\d+)(?:v\d+)?(?:\s|\))', title)
     if match:
         return match.group(1)
     return None

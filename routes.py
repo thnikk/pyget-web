@@ -687,3 +687,62 @@ def get_pending_replacements():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@api_bp.route('/api/downloaded', methods=['GET'])
+def get_downloaded_episodes():
+    """Get all downloaded episodes with their metadata."""
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        
+        c.execute('''
+            SELECT 
+                dt.id,
+                dt.tracked_show_id,
+                dt.torrent_url,
+                dt.torrent_name,
+                dt.added_at,
+                dt.published_at,
+                dt.episode_number,
+                dt.version,
+                dt.subgroup,
+                dt.replaced_by,
+                dt.is_deleted,
+                ts.show_name,
+                ts.season_name,
+                ts.image_path,
+                fp.color as profile_color,
+                fp.name as profile_name
+            FROM downloaded_torrents dt
+            JOIN tracked_shows ts ON dt.tracked_show_id = ts.id
+            LEFT JOIN feed_profiles fp ON ts.profile_id = fp.id
+            ORDER BY COALESCE(dt.published_at, dt.added_at) DESC
+        ''')
+        
+        downloaded = []
+        for row in c.fetchall():
+            downloaded.append({
+                'id': row['id'],
+                'tracked_show_id': row['tracked_show_id'],
+                'torrent_url': row['torrent_url'],
+                'torrent_name': row['torrent_name'],
+                'added_at': row['added_at'],
+                'published_at': row['published_at'],
+                'episode_number': row['episode_number'],
+                'version': row['version'],
+                'subgroup': row['subgroup'],
+                'replaced_by': row['replaced_by'],
+                'is_deleted': row['is_deleted'],
+                'show_name': row['show_name'],
+                'season_name': row['season_name'],
+                'image_path': row['image_path'],
+                'profile_color': row['profile_color'],
+                'profile_name': row['profile_name']
+            })
+        
+        conn.close()
+        return jsonify({'downloaded': downloaded})
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
