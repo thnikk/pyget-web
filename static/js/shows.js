@@ -130,7 +130,7 @@ export async function handleAddShowDetailsSubmit(e) {
         await api.trackShow(data);
         resetAddShowModal();
         showNotification('Show tracked successfully', 'success');
-        document.querySelector('.nav-tab[data-tab="shows"]').click();
+        window.switchToTab('shows');
     } catch (error) {
         showNotification('Error tracking show', 'error');
     }

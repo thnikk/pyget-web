@@ -6,24 +6,39 @@ import { initLogTab } from './logs.js';
 import { closeModal, showNotification } from './ui.js';
 import { api } from './api.js';
 
+// Tab persistence functions - make globally available
+window.saveActiveTab = (tabName) => {
+    localStorage.setItem('pyget-active-tab', tabName);
+};
+
+window.loadActiveTab = () => {
+    return localStorage.getItem('pyget-active-tab') || 'shows';
+};
+
+window.switchToTab = (tabName) => {
+    // Update active tab button
+    document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`.nav-tab[data-tab="${tabName}"]`)?.classList.add('active');
+
+    // Update active tab content
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    document.getElementById(`${tabName}-tab`)?.classList.add('active');
+
+    // Load data for the tab
+    if (tabName === 'sources') loadSources();
+    else if (tabName === 'shows') loadTrackedShows();
+    else if (tabName === 'schedule') loadSchedule();
+    else if (tabName === 'log') initLogTab();
+
+    // Save the active tab
+    saveActiveTab(tabName);
+};
+
 // Tab navigation
 document.querySelectorAll('.nav-tab').forEach(button => {
     button.addEventListener('click', () => {
         const tabName = button.dataset.tab;
-
-        // Update active tab button
-        document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.remove('active'));
-        button.classList.add('active');
-
-        // Update active tab content
-        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-        document.getElementById(`${tabName}-tab`).classList.add('active');
-
-        // Load data for the tab
-        if (tabName === 'sources') loadSources();
-        else if (tabName === 'shows') loadTrackedShows();
-        else if (tabName === 'schedule') loadSchedule();
-        else if (tabName === 'log') initLogTab();
+        switchToTab(tabName);
     });
 });
 
@@ -108,3 +123,9 @@ document.getElementById('clear-search-btn').onclick = () => {
 
 // Initial load
 checkSetup();
+
+// Restore saved tab on page load
+document.addEventListener('DOMContentLoaded', () => {
+    const savedTab = loadActiveTab();
+    switchToTab(savedTab);
+});
