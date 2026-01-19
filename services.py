@@ -112,9 +112,9 @@ def check_and_download_torrents():
                 continue
 
             current_time = time.time()
-            shows_to_check = []
+            profiles_to_check = set()
 
-            # Group shows by profile and check intervals
+            # First pass: identify which profiles need checking
             for show in tracked_shows:
                 profile_id = show['profile_id']
                 interval = (show['profile_interval'] or 30) * 60  # Convert minutes to seconds
@@ -122,10 +122,13 @@ def check_and_download_torrents():
                 # Check if this profile needs to be checked
                 if (profile_id not in profile_last_checked or 
                     current_time - profile_last_checked[profile_id] >= interval):
-                    shows_to_check.append(show)
+                    profiles_to_check.add(profile_id)
                     
                     # Update last checked time for this profile
                     profile_last_checked[profile_id] = current_time
+
+            # Second pass: add all shows for profiles that need checking
+            shows_to_check = [show for show in tracked_shows if show['profile_id'] in profiles_to_check]
 
             if shows_to_check:
                 print(f"Checking {len(shows_to_check)} shows due for RSS check")
@@ -198,6 +201,7 @@ def check_and_download_torrents():
                                 published_at = datetime.fromtimestamp(
                                     calendar.timegm(entry.published_parsed), timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
 
+                            os.makedirs(download_path, exist_ok=True)
                             tc.add_torrent(torrent_url, download_dir=download_path)
                             print(f"Added to Transmission: {entry.title}")
 
@@ -389,6 +393,7 @@ def check_single_show(tracked_show_id):
                     published_at = datetime.fromtimestamp(
                         calendar.timegm(entry.published_parsed), timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
 
+                os.makedirs(download_path, exist_ok=True)
                 tc.add_torrent(torrent_url, download_dir=download_path)
                 print(f"Added to Transmission: {entry.title}")
 
