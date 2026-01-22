@@ -5,9 +5,9 @@ from config import DB_PATH
 def get_notification_settings():
     """Get notification settings from database."""
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(DB_PATH, timeout=30)
         c = conn.cursor()
-        
+
         c.execute('SELECT value FROM settings WHERE key = ?', ('notifications_enabled',))
         enabled_row = c.fetchone()
         enabled = enabled_row[0] == '1' if enabled_row else False
@@ -21,7 +21,7 @@ def get_notification_settings():
 def log_notification(message, notification_type='info', torrent_name=None, show_name=None):
     """Store notification in database log."""
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(DB_PATH, timeout=30)
         c = conn.cursor()
         c.execute('''
             INSERT INTO notification_log (message, type, torrent_name, show_name)

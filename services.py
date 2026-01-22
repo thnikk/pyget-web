@@ -13,7 +13,7 @@ def get_transmission_client():
     """Connect to Transmission daemon."""
     try:
         # Get settings from database
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(DB_PATH, timeout=30)
         c = conn.cursor()
         c.execute('SELECT value FROM settings WHERE key = ?',
                   ('transmission_host',))
@@ -40,7 +40,7 @@ def update_cached_shows_once():
     time.sleep(2)  # Wait for app to fully start
     try:
         print("Initial cache update...")
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(DB_PATH, timeout=30)
         conn.row_factory = sqlite3.Row
         c = conn.cursor()
 
@@ -92,7 +92,7 @@ def check_and_download_torrents():
 
     while True:
         try:
-            conn = sqlite3.connect(DB_PATH)
+            conn = sqlite3.connect(DB_PATH, timeout=30)
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
 
@@ -260,7 +260,7 @@ def update_cached_shows():
 
     while True:
         try:
-            conn = sqlite3.connect(DB_PATH)
+            conn = sqlite3.connect(DB_PATH, timeout=30)
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
 
@@ -332,7 +332,7 @@ def check_single_show(tracked_show_id):
     Used when first adding a show to get initial episodes.
     """
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(DB_PATH, timeout=30)
         c = conn.cursor()
 
         c.execute('SELECT * FROM tracked_shows WHERE id = ?',
@@ -433,12 +433,12 @@ def cache_single_profile(profile):
         interval = 300
         
     feed_url = build_feed_url(base_url, uploader, quality)
-    
+
     try:
         print(f"Caching shows from new profile: {name}")
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(DB_PATH, timeout=30)
         c = conn.cursor()
-        
+
         feed = feedparser.parse(feed_url)
         shows_seen = set()
         
@@ -465,7 +465,7 @@ def cache_single_profile(profile):
 def get_replacement_setting():
     """Check if automatic v2 replacement is enabled."""
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(DB_PATH, timeout=30)
         c = conn.cursor()
         c.execute('SELECT value FROM settings WHERE key = ?', ('auto_replace_v2',))
         result = c.fetchone()
@@ -486,10 +486,10 @@ def monitor_downloads_for_replacement():
             if not get_replacement_setting():
                 time.sleep(60)
                 continue
-                
-            conn = sqlite3.connect(DB_PATH)
+
+            conn = sqlite3.connect(DB_PATH, timeout=30)
             c = conn.cursor()
-            
+
             # Find torrents that are marked to be replaced
             c.execute('''
                 SELECT dt.id, dt.torrent_url, dt.torrent_name, dt.replaced_by

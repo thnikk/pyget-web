@@ -5,8 +5,10 @@ Main entry point for the application.
 """
 import threading
 import argparse
+import sys
 from flask import Flask
 from flask_cors import CORS
+from lock_manager import acquire_lock, setup_signal_handlers
 from database import init_db
 from routes import api_bp
 from services import (
@@ -30,6 +32,13 @@ if __name__ == '__main__':
     parser.add_argument('--host', type=str, default='0.0.0.0', help='Host to listen on')
     parser.add_argument('--port', type=int, default=5123, help='Port to listen on')
     args, _ = parser.parse_known_args()
+
+    # Acquire lock to prevent multiple instances
+    if not acquire_lock():
+        sys.exit(1)
+    
+    # Setup signal handlers for graceful shutdown
+    setup_signal_handlers()
 
     # Initialize database
     init_db()
