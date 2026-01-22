@@ -1,4 +1,4 @@
-name: Build and Release OBS Remote
+name: Build and Release Pyget
 
 on:
   workflow_dispatch:
@@ -31,13 +31,13 @@ jobs:
     - name: Build executable
       run: |
         source venv/bin/activate
-        pyinstaller obs-remote.spec
+        pyinstaller pyget-web.spec
     
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: obs-remote-ubuntu
-        path: dist/obs-remote
+        name: pyget-web-ubuntu
+        path: dist/pyget-web
 
   build-archlinux:
     runs-on: ubuntu-latest
@@ -63,13 +63,13 @@ jobs:
     - name: Build executable
       run: |
         source venv/bin/activate
-        pyinstaller obs-remote.spec
+        pyinstaller pyget-web.spec
     
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: obs-remote-archlinux
-        path: dist/obs-remote
+        name: pyget-web-archlinux
+        path: dist/pyget-web
 
   create-release:
     needs: [build-ubuntu, build-archlinux]
@@ -81,19 +81,19 @@ jobs:
     - name: Download Ubuntu artifact
       uses: actions/download-artifact@v4
       with:
-        name: obs-remote-ubuntu
+        name: pyget-web-ubuntu
         path: ./ubuntu
     
     - name: Download Arch Linux artifact
       uses: actions/download-artifact@v4
       with:
-        name: obs-remote-archlinux
+        name: pyget-web-archlinux
         path: ./archlinux
     
     - name: Create zipped releases
       run: |
-        cd ubuntu && zip ../obs-remote-${{ inputs.version }}-ubuntu.zip obs-remote && cd ..
-        cd archlinux && zip ../obs-remote-${{ inputs.version }}-archlinux.zip obs-remote && cd ..
+        cd ubuntu && zip ../pyget-web-${{ inputs.version }}-ubuntu.zip pyget-web && cd ..
+        cd archlinux && zip ../pyget-web-${{ inputs.version }}-archlinux.zip pyget-web && cd ..
     
     - name: Create Release
       uses: softprops/action-gh-release@v1
@@ -103,7 +103,7 @@ jobs:
         draft: false
         prerelease: false
         files: |
-          ./obs-remote-${{ inputs.version }}-ubuntu.zip
-          ./obs-remote-${{ inputs.version }}-archlinux.zip
+          ./pyget-web-${{ inputs.version }}-ubuntu.zip
+          ./pyget-web-${{ inputs.version }}-archlinux.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
