@@ -99,10 +99,20 @@ jobs:
     - name: Generate release body
       run: |
         if [ -z "$PREV_TAG" ]; then
-          echo "BODY=## Changes\n- Initial release" >> $GITHUB_ENV
+          {
+            echo 'BODY<<EOF'
+            echo '## Changes'
+            echo '- Initial release'
+            echo 'EOF'
+          } >> $GITHUB_ENV
         else
           CHANGES=$(git log --pretty=format:"- %s" --no-merges $PREV_TAG..HEAD)
-          echo "BODY=## Changes\n$CHANGES" >> $GITHUB_ENV
+          {
+            echo 'BODY<<EOF'
+            echo '## Changes'
+            echo "$CHANGES"
+            echo 'EOF'
+          } >> $GITHUB_ENV
         fi
     
     - name: Create zipped releases
