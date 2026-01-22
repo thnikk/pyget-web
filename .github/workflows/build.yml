@@ -78,6 +78,9 @@ jobs:
       contents: write
     
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
     - name: Download Ubuntu artifact
       uses: actions/download-artifact@v4
       with:
@@ -90,6 +93,18 @@ jobs:
         name: pyget-web-archlinux
         path: ./archlinux
     
+    - name: Find previous tag
+      run: echo "PREV_TAG=$(git tag --sort=-version:refname | sed -n '2p')" >> $GITHUB_ENV
+    
+    - name: Generate release body
+      run: |
+        if [ -z "$PREV_TAG" ]; then
+          echo "BODY=## Changes\n- Initial release" >> $GITHUB_ENV
+        else
+          CHANGES=$(git log --pretty=format:"- %s" --no-merges $PREV_TAG..HEAD)
+          echo "BODY=## Changes\n$CHANGES" >> $GITHUB_ENV
+        fi
+    
     - name: Create zipped releases
       run: |
         cd ubuntu && zip ../pyget-web-${{ inputs.version }}-ubuntu.zip pyget-web && cd ..
@@ -100,6 +115,7 @@ jobs:
       with:
         tag_name: ${{ inputs.version }}
         name: Release ${{ inputs.version }}
+        body: ${{ env.BODY }}
         draft: false
         prerelease: false
         files: |
