@@ -94,7 +94,7 @@ jobs:
         path: ./archlinux
     
     - name: Find previous tag
-      run: echo "PREV_TAG=$(git tag --sort=-version:refname | sed -n '2p')" >> $GITHUB_ENV
+      run: echo "PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo '')" >> $GITHUB_ENV
     
     - name: Generate release body
       run: |
