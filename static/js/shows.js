@@ -253,23 +253,73 @@ export async function handleShowDrop(e, showId) {
     const card = document.getElementById(`show-card-${showId}`);
     if (card) card.classList.remove('drag-over');
 
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-        const file = files[0];
-        if (!file.type.startsWith('image/')) {
-            showNotification('Please drop an image file', 'error');
+    // Show loading spinner
+    const spinner = showLoadingSpinner(card);
+
+    try {
+        // Check for files first (existing functionality)
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            const file = files[0];
+            if (!file.type.startsWith('image/')) {
+                throw new Error('Please drop an image file');
+            }
+            await uploadFile(showId, file);
             return;
         }
 
-        const formData = new FormData();
-        formData.append('file', file);
+        // Check for URLs (new cross-browser support)
+        const url = e.dataTransfer.getData('text/uri-list') ||
+                   e.dataTransfer.getData('text/plain');
 
-        try {
-            await api.uploadArt(showId, formData);
-            showNotification('Artwork updated', 'success');
-            loadTrackedShows();
-        } catch (error) {
-            showNotification('Error updating artwork', 'error');
+        if (url && isValidImageUrl(url)) {
+            await uploadFromUrl(showId, url);
+            return;
         }
+
+        throw new Error('Please drop an image file or drag an image from another browser tab');
+    } catch (error) {
+        showNotification(error.message, 'error');
+    } finally {
+        hideLoadingSpinner(spinner);
     }
 }
+
+function isValidImageUrl(url) {
+    try {
+        const urlObj = new URL(url);
+        return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+    } catch {
+        return false;
+    }
+}
+
+async function uploadFromUrl(showId, url) {
+    await api.uploadArtFromUrl(showId, url);
+    showNotification('Artwork updated', 'success');
+    loadTrackedShows();
+}
+
+async function uploadFile(showId, file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    await api.uploadArt(showId, formData);
+    showNotification('Artwork updated', 'success');
+    loadTrackedShows();
+}
+
+function showLoadingSpinner(card) {
+    const spinner = document.createElement('div');
+    spinner.className = 'loading-spinner';
+    spinner.innerHTML = '<div class="spinner"></div>';
+    card.appendChild(spinner);
+    return spinner;
+}
+
+function hideLoadingSpinner(spinner) {
+    if (spinner && spinner.parentNode) {
+        spinner.parentNode.removeChild(spinner);
+    }
+}
+

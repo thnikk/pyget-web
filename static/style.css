@@ -1338,9 +1338,32 @@ form .btn {
         right: 10px;
         left: 10px;
     }
-    
+
     .toast {
         min-width: auto;
         max-width: none;
     }
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+}
+
+.spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--nord3);
+    border-top: 2px solid var(--nord8);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }

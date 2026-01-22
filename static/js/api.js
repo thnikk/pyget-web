@@ -66,6 +66,11 @@ export const api = {
         method: 'POST',
         body: formData
     }),
+    uploadArtFromUrl: (id, url) => request(`/tracked/${id}/art/url`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+    }),
     
     getSchedule: () => request('/schedule'),
     

@@ -2,8 +2,12 @@ import os
 import sqlite3
 import threading
 import base64
+import io
 from datetime import datetime, timedelta, timezone
 from flask import Blueprint, jsonify, request, send_from_directory, current_app
+from werkzeug.datastructures import FileStorage
+import requests
+from PIL import Image
 from config import DB_PATH, DATA_DIR
 from database import get_db_connection
 from utils import build_feed_url, extract_episode_number, parse_anime_title
@@ -273,6 +277,14 @@ def upload_show_art(tracked_id):
         return jsonify({'error': 'No selected file'}), 400
     
     if file:
+        # Check file size (10MB limit)
+        file.seek(0, 2)  # Seek to end
+        file_size = file.tell()
+        file.seek(0)  # Reset to beginning
+
+        if file_size > 10 * 1024 * 1024:  # 10MB
+            return jsonify({'error': 'File exceeds 10MB limit'}), 400
+
         conn = get_db_connection()
         c = conn.cursor()
         c.execute('SELECT show_name FROM tracked_shows WHERE id = ?', (tracked_id,))
@@ -280,35 +292,126 @@ def upload_show_art(tracked_id):
         if not row:
             conn.close()
             return jsonify({'error': 'Show not found'}), 404
-        
+
         show_name = row[0]
-        
+
         # Create art directory
         art_dir = os.path.join(DATA_DIR, 'art')
         os.makedirs(art_dir, exist_ok=True)
-        
+
         # Generate filename
         # User requested base64-encoded name
         ext = os.path.splitext(file.filename)[1]
         if not ext:
             ext = '.jpg' # Default fallback
-            
+
         safe_name = base64.urlsafe_b64encode(show_name.encode()).decode()
         # Remove padding characters to make it cleaner
         safe_name = safe_name.rstrip('=')
-        
+
         filename = f"{safe_name}{ext}"
         filepath = os.path.join(art_dir, filename)
-        
+
         file.save(filepath)
-        
+
         # Save relative path to DB
         rel_path = f"art/{filename}"
         c.execute('UPDATE tracked_shows SET image_path = ? WHERE id = ?', (rel_path, tracked_id))
         conn.commit()
         conn.close()
-        
+
         return jsonify({'image_path': rel_path})
+
+
+@api_bp.route('/api/tracked/<int:tracked_id>/art/url', methods=['POST'])
+def upload_show_art_from_url(tracked_id):
+    """Upload artwork from URL."""
+    data = request.get_json()
+    url = data.get('url')
+    if not url or not url.startswith(('http://', 'https://')):
+        return jsonify({'error': 'Valid HTTP/HTTPS URL required'}), 400
+
+    try:
+        # Download image with timeout and size limit
+        response = requests.get(url, timeout=30, stream=True)
+        response.raise_for_status()
+
+        # Check content type
+        content_type = response.headers.get('content-type', '')
+        if not content_type.startswith('image/'):
+            return jsonify({'error': 'URL does not point to an image'}), 400
+
+        # Check size (read up to 10MB + 1 byte)
+        content = b''
+        for chunk in response.iter_content(chunk_size=8192):
+            content += chunk
+            if len(content) > 10 * 1024 * 1024 + 1:  # 10MB + 1
+                return jsonify({'error': 'Image exceeds 10MB limit'}), 400
+
+        if len(content) > 10 * 1024 * 1024:
+            return jsonify({'error': 'Image exceeds 10MB limit'}), 400
+
+        # Validate it's actually an image
+        try:
+            Image.open(io.BytesIO(content)).verify()
+        except Exception:
+            return jsonify({'error': 'Invalid image file'}), 400
+
+        # Create FileStorage-like object for existing logic
+        file_storage = FileStorage(
+            stream=io.BytesIO(content),
+            filename=url.split('/')[-1] or 'downloaded-image.jpg',
+            content_type=content_type
+        )
+
+        # Get show name for filename generation
+        conn = get_db_connection()
+        c = conn.cursor()
+        c.execute('SELECT show_name FROM tracked_shows WHERE id = ?', (tracked_id,))
+        row = c.fetchone()
+        if not row:
+            conn.close()
+            return jsonify({'error': 'Show not found'}), 404
+
+        show_name = row[0]
+
+        # Create art directory
+        art_dir = os.path.join(DATA_DIR, 'art')
+        os.makedirs(art_dir, exist_ok=True)
+
+        # Generate filename
+        ext = os.path.splitext(file_storage.filename)[1]
+        if not ext:
+            # Try to infer from content type
+            if 'jpeg' in content_type or 'jpg' in content_type:
+                ext = '.jpg'
+            elif 'png' in content_type:
+                ext = '.png'
+            elif 'gif' in content_type:
+                ext = '.gif'
+            elif 'webp' in content_type:
+                ext = '.webp'
+            else:
+                ext = '.jpg'  # Default fallback
+
+        safe_name = base64.urlsafe_b64encode(show_name.encode()).decode()
+        safe_name = safe_name.rstrip('=')
+        filename = f"{safe_name}{ext}"
+        filepath = os.path.join(art_dir, filename)
+
+        # Save the file
+        file_storage.save(filepath)
+
+        # Save relative path to DB
+        rel_path = f"art/{filename}"
+        c.execute('UPDATE tracked_shows SET image_path = ? WHERE id = ?', (rel_path, tracked_id))
+        conn.commit()
+        conn.close()
+
+        return jsonify({'image_path': rel_path})
+
+    except requests.exceptions.RequestException as e:
+        return jsonify({'error': f'Failed to download image: {str(e)}'}), 400
 
 
 @api_bp.route('/api/tracked/<int:tracked_id>', methods=['DELETE', 'PUT'])
