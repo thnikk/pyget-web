@@ -197,6 +197,11 @@ body {
     background: var(--nord2);
 }
 
+input::placeholder {
+    color: var(--nord4);
+    opacity: 0.5;
+}
+
 /* Toggle Switch Styles */
 .toggle-container {
     display: flex;
@@ -1026,7 +1031,7 @@ form .btn {
     max-width: 600px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
     border: 1px solid var(--nord3);
-    overflow: hidden;
+    /* overflow: hidden; */
 }
 
 .modal-large {
@@ -1041,6 +1046,7 @@ form .btn {
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid var(--nord3);
+    border-radius: 10px 10px 0px 0px;
 }
 
 .modal-header h3 {

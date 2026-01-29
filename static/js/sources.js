@@ -39,6 +39,11 @@ export async function loadSources() {
                 <div class="source-card-meta">
                     Check Interval: ${source.interval || 30} minutes
                 </div>
+                ${source.download_dir ? `
+                    <div class="source-card-meta">
+                        Download Directory: ${source.download_dir}
+                    </div>
+                ` : ''}
             </div>
         `).join('');
         container.innerHTML = content;
@@ -62,6 +67,9 @@ export function openSourceModal(source = null) {
     const modal = document.getElementById('source-modal');
     const modalTitle = document.getElementById('source-modal-title');
     const deleteBtn = document.getElementById('delete-source-btn');
+    const downloadDirEnabled = document.getElementById('source-download-dir-enabled');
+    const downloadDirGroup = document.getElementById('source-download-dir-group');
+    const downloadDirInput = document.getElementById('source-download-dir');
 
     if (source) {
         modalTitle.textContent = 'Edit Source';
@@ -72,6 +80,17 @@ export function openSourceModal(source = null) {
         document.getElementById('uploader').value = source.uploader || '';
         document.getElementById('quality').value = source.quality || '';
         document.getElementById('source-interval').value = source.interval || 30;
+        
+        if (source.download_dir) {
+            downloadDirEnabled.checked = true;
+            downloadDirInput.value = source.download_dir;
+            downloadDirGroup.style.display = 'block';
+        } else {
+            downloadDirEnabled.checked = false;
+            downloadDirInput.value = '';
+            downloadDirGroup.style.display = 'none';
+        }
+        
         deleteBtn.style.display = 'block';
         deleteBtn.onclick = () => {
             deleteSource(source.id);
@@ -82,6 +101,9 @@ export function openSourceModal(source = null) {
         document.getElementById('source-form').reset();
         document.getElementById('source-color').value = '#88c0d0';
         document.getElementById('source-interval').value = 30;
+        downloadDirEnabled.checked = false;
+        downloadDirInput.value = '';
+        downloadDirGroup.style.display = 'none';
         deleteBtn.style.display = 'none';
     }
 
@@ -105,6 +127,7 @@ export async function handleSourceSubmit(e) {
 
     const sourceId = document.getElementById('source-id').value;
     const isEdit = !!sourceId;
+    const downloadDirEnabled = document.getElementById('source-download-dir-enabled').checked;
 
     const data = {
         name: document.getElementById('source-name').value,
@@ -113,6 +136,7 @@ export async function handleSourceSubmit(e) {
         quality: document.getElementById('quality').value || null,
         color: document.getElementById('source-color').value,
         interval: parseInt(document.getElementById('source-interval').value) || 30,
+        download_dir: downloadDirEnabled ? document.getElementById('source-download-dir').value : null,
     };
 
     try {

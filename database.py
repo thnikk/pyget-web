@@ -38,6 +38,13 @@ def init_db():
     except sqlite3.OperationalError:
         pass  # Column already exists
 
+    # Add download_dir column if it doesn't exist (for existing databases)
+    try:
+        c.execute('ALTER TABLE feed_profiles ADD COLUMN download_dir TEXT')
+        print("Added download_dir column to feed_profiles")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+
     # Tracked shows table
     c.execute('''
         CREATE TABLE IF NOT EXISTS tracked_shows (

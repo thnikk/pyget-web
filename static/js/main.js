@@ -82,6 +82,14 @@ document.getElementById('download-directory').oninput = handlePathInput;
 document.getElementById('download-directory').onkeydown = handlePathKeydown;
 document.getElementById('setup-download-directory').oninput = handlePathInput;
 document.getElementById('setup-download-directory').onkeydown = handlePathKeydown;
+document.getElementById('source-download-dir').oninput = handlePathInput;
+document.getElementById('source-download-dir').onkeydown = handlePathKeydown;
+
+// Source download directory override toggle
+document.getElementById('source-download-dir-enabled').onchange = (e) => {
+    const downloadDirGroup = document.getElementById('source-download-dir-group');
+    downloadDirGroup.style.display = e.target.checked ? 'block' : 'none';
+};
 
 document.querySelector('.close-settings').onclick = () => closeModal('settings-modal');
 document.querySelector('.close-add').onclick = resetAddShowModal;

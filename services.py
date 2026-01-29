@@ -422,15 +422,20 @@ def check_single_show(tracked_show_id):
 
 def cache_single_profile(profile):
     """Cache shows from a single profile immediately."""
-    if len(profile) >= 7:
+    if len(profile) >= 8:
+        profile_id, name, base_url, uploader, quality, color, interval, download_dir = profile
+    elif len(profile) >= 7:
         profile_id, name, base_url, uploader, quality, color, interval = profile
+        download_dir = None
     elif len(profile) >= 6:
         profile_id, name, base_url, uploader, quality, color = profile
         interval = 300
+        download_dir = None
     else:
         profile_id, name, base_url, uploader, quality = profile
         color = '#88c0d0'
         interval = 300
+        download_dir = None
         
     feed_url = build_feed_url(base_url, uploader, quality)
 

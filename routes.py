@@ -50,7 +50,7 @@ def manage_profile_id(profile_id):
         data = request.json
         c.execute('''
             UPDATE feed_profiles
-            SET name = ?, base_url = ?, uploader = ?, quality = ?, color = ?, interval = ?
+            SET name = ?, base_url = ?, uploader = ?, quality = ?, color = ?, interval = ?, download_dir = ?
             WHERE id = ?
         ''', (
             data['name'],
@@ -59,6 +59,7 @@ def manage_profile_id(profile_id):
             data.get('quality'),
             data.get('color', '#88c0d0'),
             data.get('interval', 30),
+            data.get('download_dir'),
             profile_id
         ))
         conn.commit()
@@ -66,7 +67,8 @@ def manage_profile_id(profile_id):
         # Get the updated profile details for caching
         profile = (profile_id, data['name'], data['base_url'],
                    data.get('uploader'), data.get('quality'),
-                   data.get('color', '#88c0d0'), data.get('interval', 300))
+                   data.get('color', '#88c0d0'), data.get('interval', 300),
+                   data.get('download_dir'))
 
         conn.close()
 
@@ -86,7 +88,7 @@ def manage_profiles():
     c = conn.cursor()
 
     if request.method == 'GET':
-        c.execute('SELECT id, name, base_url, uploader, quality, color, interval, created_at FROM feed_profiles ORDER BY created_at DESC')
+        c.execute('SELECT id, name, base_url, uploader, quality, color, interval, download_dir, created_at FROM feed_profiles ORDER BY created_at DESC')
         profiles = []
         for row in c.fetchall():
             profiles.append({
@@ -97,6 +99,7 @@ def manage_profiles():
                 'quality': row['quality'],
                 'color': row['color'] or '#88c0d0',
                 'interval': row['interval'] if row['interval'] else 30,
+                'download_dir': row['download_dir'],
                 'created_at': row['created_at']
             })
         conn.close()
@@ -105,15 +108,16 @@ def manage_profiles():
     elif request.method == 'POST':
         data = request.json
         c.execute('''
-            INSERT INTO feed_profiles (name, base_url, uploader, quality, color, interval)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO feed_profiles (name, base_url, uploader, quality, color, interval, download_dir)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         ''', (
             data['name'],
             data['base_url'],
             data.get('uploader'),
             data.get('quality'),
             data.get('color', '#88c0d0'),
-            data.get('interval', 300)
+            data.get('interval', 300),
+            data.get('download_dir')
         ))
         conn.commit()
         profile_id = c.lastrowid
@@ -121,7 +125,8 @@ def manage_profiles():
         # Get the profile details
         profile = (profile_id, data['name'], data['base_url'],
                    data.get('uploader'), data.get('quality'),
-                   data.get('color', '#88c0d0'), data.get('interval', 300))
+                   data.get('color', '#88c0d0'), data.get('interval', 300),
+                   data.get('download_dir'))
         
         conn.close()
         
@@ -235,13 +240,9 @@ def manage_tracked_shows():
             conn.close()
             return jsonify({'error': 'Profile not found'}), 404
 
-        # Handle both old and new schema
-        if len(profile) >= 8:
-            _, _, base_url, uploader, quality, color, _, _ = profile
-        elif len(profile) >= 7:
-            _, _, base_url, uploader, quality, color, _ = profile
-        else:
-            _, _, base_url, uploader, quality, _ = profile
+        base_url = profile['base_url']
+        uploader = profile['uploader']
+        quality = profile['quality']
             
         feed_url = build_feed_url(base_url, uploader, quality, show_name)
 
