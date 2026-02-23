@@ -39,6 +39,36 @@ jobs:
         name: pyget-web-ubuntu
         path: dist/pyget-web
 
+  build-ubuntu-arm:
+    runs-on: ubuntu-24.04-arm
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Create virtual environment and install dependencies
+      run: |
+        python -m venv venv
+        source venv/bin/activate
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Build executable
+      run: |
+        source venv/bin/activate
+        pyinstaller pyget-web.spec
+    
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: pyget-web-ubuntu-arm
+        path: dist/pyget-web
+
   build-archlinux:
     runs-on: ubuntu-latest
     container:
@@ -86,6 +116,12 @@ jobs:
       with:
         name: pyget-web-ubuntu
         path: ./ubuntu
+
+    - name: Download Ubuntu Arm artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: pyget-web-ubuntu-arm
+        path: ./ubuntu-arm
     
     - name: Download Arch Linux artifact
       uses: actions/download-artifact@v4
@@ -118,6 +154,7 @@ jobs:
     - name: Create zipped releases
       run: |
         cd ubuntu && zip ../pyget-web-${{ inputs.version }}-ubuntu.zip pyget-web && cd ..
+        cd ubuntu-arm && zip ../pyget-web-${{ inputs.version }}-ubuntu-arm.zip pyget-web && cd ..
         cd archlinux && zip ../pyget-web-${{ inputs.version }}-archlinux.zip pyget-web && cd ..
     
     - name: Create Release
@@ -130,6 +167,7 @@ jobs:
         prerelease: false
         files: |
           ./pyget-web-${{ inputs.version }}-ubuntu.zip
+          ./pyget-web-${{ inputs.version }}-ubuntu-arm.zip
           ./pyget-web-${{ inputs.version }}-archlinux.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
