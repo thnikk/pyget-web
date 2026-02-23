@@ -37,4 +37,9 @@ To install as a systemd user service:
 ./run.sh --install
 ```
 
+Enable user lingering for systemd
+```bash
+sudo loginctl enable-linger "$USER"
+```
+
 Once it's running, open your browser and navigate to `http://localhost:5123`. If you want to use a different port, you can use the argument `--port` when launching the server.
