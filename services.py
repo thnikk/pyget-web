@@ -111,6 +111,13 @@ def check_and_download_torrents():
                 time.sleep(60)  # Wait 1 minute before retry
                 continue
 
+            # Build set of active torrent names for re-add detection
+            active_torrent_names = set()
+            try:
+                active_torrent_names = {t.name for t in tc.get_torrents()}
+            except Exception as e:
+                print(f"Could not fetch active torrents: {e}")
+
             current_time = time.time()
             profiles_to_check = set()
 
@@ -186,12 +193,33 @@ def check_and_download_torrents():
                         
                         # Check if already downloaded
                         c.execute('''
-                            SELECT id FROM downloaded_torrents
+                            SELECT id, torrent_name, is_deleted
+                            FROM downloaded_torrents
                             WHERE torrent_url = ?
                         ''', (torrent_url,))
 
-                        if c.fetchone():
-                            continue  # Already added
+                        existing = c.fetchone()
+                        if existing:
+                            # Re-add if torrent disappeared from Transmission
+                            if (not existing['is_deleted'] and
+                                    existing['torrent_name']
+                                    not in active_torrent_names):
+                                try:
+                                    os.makedirs(download_path, exist_ok=True)
+                                    tc.add_torrent(
+                                        torrent_url,
+                                        download_dir=download_path
+                                    )
+                                    print(
+                                        f"Re-added missing torrent: "
+                                        f"{entry.title}"
+                                    )
+                                except Exception as e:
+                                    print(
+                                        f"Error re-adding torrent "
+                                        f"{entry.title}: {e}"
+                                    )
+                            continue  # Already recorded in DB
 
                         # Add torrent to Transmission
                         try:
