@@ -211,6 +211,31 @@
                             </div>
                             <small class="form-help">Automatically replace v1 torrents with v2+ versions from the same subgroup when downloads complete</small>
                         </div>
+
+                        <div class="settings-section">
+                            <h4>AniDB Artwork</h4>
+                            <div class="form-group">
+                                <label for="anidb-client">Client Name:</label>
+                                <input type="text" id="anidb-client" placeholder="my-app">
+                                <small class="form-help">
+                                    Register a client at
+                                    <a href="https://anidb.net/register/client" target="_blank">anidb.net/register/client</a>
+                                </small>
+                            </div>
+                            <div class="form-group">
+                                <label for="anidb-clientver">Client Version:</label>
+                                <input type="number" id="anidb-clientver" value="1" min="1">
+                            </div>
+                            <div class="form-group">
+                                <label for="anidb-user">Username:</label>
+                                <input type="text" id="anidb-user" placeholder="AniDB username">
+                                <small class="form-help">Required for Type 4 (double auth) clients</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="anidb-pass">Password:</label>
+                                <input type="password" id="anidb-pass" placeholder="AniDB password">
+                            </div>
+                        </div>
                         
                         <button type="button" id="test-notification-btn" class="btn btn-secondary">
                             <span class="material-icons">notifications</span>
@@ -325,6 +350,16 @@
                     <div class="form-group">
                         <label for="edit-show-max-age">Max Age (days):</label>
                         <input type="number" id="edit-show-max-age">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-show-anidb-id">AniDB ID (optional):</label>
+                        <input type="text" id="edit-show-anidb-id" placeholder="e.g. 48579">
+                        <small class="form-help">If set, skips API search and uses the CDN directly</small>
+                    </div>
+                    <div class="form-group">
+                        <button type="button" class="btn btn-secondary" id="fetch-anidb-art-btn" style="width: 100%;">
+                            <span class="material-icons">image_search</span> Fetch Artwork from AniDB
+                        </button>
                     </div>
                     <div class="button-container">
                         <button type="button" class="btn btn-danger" id="untrack-show-btn">

@@ -71,6 +71,9 @@ export const api = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url })
     }),
+    fetchArtFromAnidb: (id) => request(`/tracked/${id}/art/anidb`, {
+        method: 'POST'
+    }),
     
     getSchedule: () => request('/schedule'),
     

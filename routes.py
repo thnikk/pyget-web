@@ -13,8 +13,66 @@ from database import get_db_connection
 from utils import build_feed_url, extract_episode_number, parse_anime_title
 from services import check_single_show, cache_single_profile, get_transmission_client
 from notifications import send_test_notification
+from anime_art import fetch_artwork_url
 
 api_bp = Blueprint('api', __name__)
+
+
+def save_artwork_image(show_name, tracked_id, image_data):
+    art_dir = os.path.join(DATA_DIR, 'art')
+    os.makedirs(art_dir, exist_ok=True)
+
+    ext = '.jpg'
+    safe_name = base64.urlsafe_b64encode(show_name.encode()).decode()
+    safe_name = safe_name.rstrip('=')
+    filename = f"{safe_name}{ext}"
+    filepath = os.path.join(art_dir, filename)
+
+    log(f"saving {len(image_data)} bytes to {filepath}")
+    with open(filepath, 'wb') as f:
+        f.write(image_data)
+
+    rel_path = f"art/{filename}"
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute('UPDATE tracked_shows SET image_path = ? WHERE id = ?',
+              (rel_path, tracked_id))
+    conn.commit()
+    conn.close()
+    log(f"DB updated: {rel_path}")
+    return rel_path
+
+
+def log(msg):
+    print(f"[artwork] {msg}", flush=True)
+
+
+def fetch_and_save_artwork(show_name, tracked_id, season_name=None, anidb_id=None):
+    log(f"fetching artwork for show={show_name!r} season={season_name!r} aid={anidb_id!r}")
+    url = fetch_artwork_url(show_name, season_name, anidb_id)
+    if not url:
+        log("no artwork URL returned from AniDB")
+        return None
+
+    log(f"downloading image from {url}")
+    try:
+        resp = requests.get(url, timeout=30)
+        log(f"image download: HTTP {resp.status_code}")
+        if resp.status_code != 200:
+            log(f"bad status downloading image: {resp.status_code}")
+            return None
+        ct = resp.headers.get('content-type', '')
+        log(f"content-type: {ct}, size: {len(resp.content)} bytes")
+        if not ct.startswith('image/'):
+            log(f"not an image: {ct}")
+            return None
+        path = save_artwork_image(show_name, tracked_id, resp.content)
+        log(f"saved artwork to {path}")
+        return path
+    except requests.RequestException as e:
+        log(f"download failed: {e}")
+        return None
+
 
 @api_bp.route('/')
 def index():
@@ -261,6 +319,13 @@ def manage_tracked_shows():
             daemon=True
         ).start()
 
+        # Auto-fetch artwork from AniDB
+        threading.Thread(
+            target=fetch_and_save_artwork,
+            args=(show_name, tracked_id, season_name),
+            daemon=True
+        ).start()
+
         return jsonify({
             'id': tracked_id,
             'status': 'tracked',
@@ -415,6 +480,31 @@ def upload_show_art_from_url(tracked_id):
         return jsonify({'error': f'Failed to download image: {str(e)}'}), 400
 
 
+@api_bp.route('/api/tracked/<int:tracked_id>/art/anidb', methods=['POST'])
+def fetch_show_art_from_anidb(tracked_id):
+    log(f"manual fetch requested for tracked_id={tracked_id}")
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute('SELECT show_name, season_name, anidb_id FROM tracked_shows WHERE id = ?',
+              (tracked_id,))
+    row = c.fetchone()
+    conn.close()
+
+    if not row:
+        log(f"tracked_id {tracked_id} not found")
+        return jsonify({'error': 'Show not found'}), 404
+
+    show_name, season_name, anidb_id = row['show_name'], row['season_name'], row['anidb_id']
+    log(f"fetching for show={show_name!r} season={season_name!r} aid={anidb_id!r}")
+
+    path = fetch_and_save_artwork(show_name, tracked_id, season_name, anidb_id)
+    if path:
+        log(f"success: {path}")
+        return jsonify({'image_path': path})
+    log("failed to fetch artwork")
+    return jsonify({'error': 'No artwork found on AniDB'}), 404
+
+
 @api_bp.route('/api/tracked/<int:tracked_id>', methods=['DELETE', 'PUT'])
 def delete_tracked_show(tracked_id):
     """Remove a tracked show."""
@@ -436,12 +526,13 @@ def delete_tracked_show(tracked_id):
         data = request.json
         c.execute('''
             UPDATE tracked_shows
-            SET show_name = ?, season_name = ?, max_age = ?
+            SET show_name = ?, season_name = ?, max_age = ?, anidb_id = ?
             WHERE id = ?
         ''', (
             data['show_name'],
             data.get('season_name'),
             data.get('max_age'),
+            data.get('anidb_id'),
             tracked_id
         ))
         conn.commit()

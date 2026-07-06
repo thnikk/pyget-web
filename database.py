@@ -60,14 +60,27 @@ def init_db():
         )
     ''')
 
-    # Add season_name, max_age, and image_path columns if they don't exist
+    # Add season_name, max_age, image_path, and anidb_id columns if they don't exist
     try:
         c.execute('ALTER TABLE tracked_shows ADD COLUMN season_name TEXT')
-        c.execute('ALTER TABLE tracked_shows ADD COLUMN max_age INTEGER')
-        c.execute('ALTER TABLE tracked_shows ADD COLUMN image_path TEXT')
-        print("Added columns to tracked_shows")
+        print("Added season_name to tracked_shows")
     except sqlite3.OperationalError:
-        pass # Columns already exist
+        pass
+    try:
+        c.execute('ALTER TABLE tracked_shows ADD COLUMN max_age INTEGER')
+        print("Added max_age to tracked_shows")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute('ALTER TABLE tracked_shows ADD COLUMN image_path TEXT')
+        print("Added image_path to tracked_shows")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute('ALTER TABLE tracked_shows ADD COLUMN anidb_id TEXT')
+        print("Added anidb_id to tracked_shows")
+    except sqlite3.OperationalError:
+        pass
 
     # Downloaded torrents table to track what we've already added
     c.execute('''
@@ -156,6 +169,22 @@ def init_db():
     c.execute('''
         INSERT OR IGNORE INTO settings (key, value)
         VALUES ('notifications_enabled', '0')
+    ''')
+    c.execute('''
+        INSERT OR IGNORE INTO settings (key, value)
+        VALUES ('anidb_client', '')
+    ''')
+    c.execute('''
+        INSERT OR IGNORE INTO settings (key, value)
+        VALUES ('anidb_clientver', '1')
+    ''')
+    c.execute('''
+        INSERT OR IGNORE INTO settings (key, value)
+        VALUES ('anidb_user', '')
+    ''')
+    c.execute('''
+        INSERT OR IGNORE INTO settings (key, value)
+        VALUES ('anidb_pass', '')
     ''')
 
     # Notifications log table

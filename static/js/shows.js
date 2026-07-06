@@ -206,13 +206,36 @@ export function openEditShowModal(show) {
     document.getElementById('edit-show-name').value = show.show_name;
     document.getElementById('edit-show-season').value = show.season_name || '';
     document.getElementById('edit-show-max-age').value = show.max_age || '';
+    document.getElementById('edit-show-anidb-id').value = show.anidb_id || '';
 
     document.getElementById('untrack-show-btn').onclick = () => {
         untrackShow(show.id);
         closeModal('edit-show-modal');
     };
+
+    document.getElementById('fetch-anidb-art-btn').onclick = () => {
+        fetchAnidbArtwork(show.id);
+    };
     
     openModal('edit-show-modal');
+}
+
+export async function fetchAnidbArtwork(showId) {
+    const btn = document.getElementById('fetch-anidb-art-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-icons">hourglass_top</span> Fetching...';
+
+    try {
+        await api.fetchArtFromAnidb(showId);
+        showNotification('Artwork fetched from AniDB', 'success');
+        closeModal('edit-show-modal');
+        loadTrackedShows();
+    } catch (error) {
+        showNotification(error.message || 'No artwork found on AniDB', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-icons">image_search</span> Fetch Artwork from AniDB';
+    }
 }
 
 export async function handleEditShowSubmit(e) {
@@ -222,7 +245,8 @@ export async function handleEditShowSubmit(e) {
     const data = {
         show_name: document.getElementById('edit-show-name').value,
         season_name: document.getElementById('edit-show-season').value,
-        max_age: document.getElementById('edit-show-max-age').value
+        max_age: document.getElementById('edit-show-max-age').value,
+        anidb_id: document.getElementById('edit-show-anidb-id').value
     };
 
     try {
