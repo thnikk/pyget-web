@@ -20,11 +20,7 @@ export async function loadSettings() {
         const notificationSettings = await api.getNotificationSettings();
         document.getElementById('notifications-enabled').checked = notificationSettings.notifications_enabled === true;
 
-        // Load AniDB settings
-        document.getElementById('anidb-client').value = settings.anidb_client || '';
-        document.getElementById('anidb-clientver').value = settings.anidb_clientver || '1';
-        document.getElementById('anidb-user').value = settings.anidb_user || '';
-        document.getElementById('anidb-pass').value = settings.anidb_pass || '';
+
     } catch (error) {
         console.error('Error loading settings:', error);
     }
@@ -34,10 +30,7 @@ export async function handleGeneralSettingsSubmit(e) {
     e.preventDefault();
     const data = {
         download_directory: document.getElementById('download-directory').value,
-        anidb_client: document.getElementById('anidb-client').value,
-        anidb_clientver: document.getElementById('anidb-clientver').value,
-        anidb_user: document.getElementById('anidb-user').value,
-        anidb_pass: document.getElementById('anidb-pass').value
+
     };
     
     // Save replacement settings separately

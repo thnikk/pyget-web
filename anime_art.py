@@ -1,11 +1,10 @@
 import gzip
 import os
 import re
-import sqlite3
 import time
 import xml.etree.ElementTree as ET
 import requests
-from config import DB_PATH, DATA_DIR
+from config import DATA_DIR
 
 ANIDB_API = "http://api.anidb.net:9001/httpapi"
 ANIDB_CDN = "https://cdn.anidb.net/images/main"
@@ -21,24 +20,8 @@ def log(msg):
     print(f"[anime_art] {msg}", flush=True)
 
 
-def get_anidb_client():
-    conn = sqlite3.connect(DB_PATH, timeout=30)
-    c = conn.cursor()
-    c.execute('SELECT value FROM settings WHERE key = ?', ('anidb_client',))
-    client_row = c.fetchone()
-    c.execute('SELECT value FROM settings WHERE key = ?', ('anidb_clientver',))
-    ver_row = c.fetchone()
-    c.execute('SELECT value FROM settings WHERE key = ?', ('anidb_user',))
-    user_row = c.fetchone()
-    c.execute('SELECT value FROM settings WHERE key = ?', ('anidb_pass',))
-    pass_row = c.fetchone()
-    conn.close()
-    client = client_row[0] if client_row else ''
-    ver = ver_row[0] if ver_row else '1'
-    user = user_row[0] if user_row else ''
-    passwd = pass_row[0] if pass_row else ''
-    log(f"AniDB client: '{client}' (v{ver}) user={'set' if user else 'not set'}")
-    return client, ver, user, passwd
+ANIDB_CLIENT = "pyget"
+ANIDB_CLIENTVER = "1"
 
 
 def _rate_limit():
@@ -206,23 +189,15 @@ def fetch_anime_by_aid(aid):
     Call request=anime&aid=<aid> to retrieve the anime record.
     Returns the picture filename string on success, or None.
     """
-    client, clientver, user, passwd = get_anidb_client()
-    if not client:
-        log("no client configured, skipping")
-        return None
-
     _rate_limit()
 
     params = {
-        'client': client,
-        'clientver': clientver,
+        'client': ANIDB_CLIENT,
+        'clientver': ANIDB_CLIENTVER,
         'protover': '1',
         'request': 'anime',
         'aid': aid,
     }
-    if user:
-        params['user'] = user
-        params['pass'] = passwd
 
     log(f"fetching AniDB record for aid={aid}")
 

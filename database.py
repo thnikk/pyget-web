@@ -170,22 +170,7 @@ def init_db():
         INSERT OR IGNORE INTO settings (key, value)
         VALUES ('notifications_enabled', '0')
     ''')
-    c.execute('''
-        INSERT OR IGNORE INTO settings (key, value)
-        VALUES ('anidb_client', '')
-    ''')
-    c.execute('''
-        INSERT OR IGNORE INTO settings (key, value)
-        VALUES ('anidb_clientver', '1')
-    ''')
-    c.execute('''
-        INSERT OR IGNORE INTO settings (key, value)
-        VALUES ('anidb_user', '')
-    ''')
-    c.execute('''
-        INSERT OR IGNORE INTO settings (key, value)
-        VALUES ('anidb_pass', '')
-    ''')
+
 
     # Notifications log table
     c.execute('''

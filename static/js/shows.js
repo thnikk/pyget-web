@@ -131,6 +131,8 @@ export async function handleAddShowDetailsSubmit(e) {
         resetAddShowModal();
         showNotification('Show tracked successfully', 'success');
         window.switchToTab('shows');
+        // Poll to pick up artwork once background thread saves it
+        [2000, 4000].forEach(ms => setTimeout(loadTrackedShows, ms));
     } catch (error) {
         showNotification('Error tracking show', 'error');
     }
