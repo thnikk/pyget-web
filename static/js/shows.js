@@ -165,6 +165,9 @@ export async function loadTrackedShows() {
             <div class="show-card" 
                  data-show='${JSON.stringify(show)}'
                  id="show-card-${show.id}">
+                <button class="show-card-remove" data-show-id="${show.id}" title="Untrack">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
                 <div class="show-card-image">
                     ${show.image_path ? 
                         `<img src="${show.image_path}" alt="${escapeHtml(show.show_name)}" style="width: 100%; height: 100%; object-fit: cover;">` :
@@ -186,12 +189,24 @@ export async function loadTrackedShows() {
         document.getElementById('add-show-card-btn').onclick = () => openAddShowModal();
         container.querySelectorAll('.show-card').forEach(card => {
             const show = JSON.parse(card.dataset.show);
-            card.onclick = () => openEditShowModal(show);
+            card.onclick = (e) => {
+                if (e.target.closest('.show-card-remove')) return;
+                openEditShowModal(show);
+            };
             
             // Drag and drop handlers
             card.ondragover = (e) => { e.preventDefault(); card.classList.add('drag-over'); };
             card.ondragleave = () => card.classList.remove('drag-over');
             card.ondrop = (e) => handleShowDrop(e, show.id);
+        });
+
+        container.querySelectorAll('.show-card-remove').forEach(btn => {
+            btn.onclick = async (e) => {
+                e.stopPropagation();
+                const id = btn.dataset.showId;
+                await untrackShow(id);
+                loadTrackedShows();
+            };
         });
 
     } catch (error) {
