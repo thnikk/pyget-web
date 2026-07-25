@@ -416,7 +416,7 @@ form .btn {
 
 .source-card {
     background: var(--nord0);
-    border-radius: 8px;
+    border-radius: 20px;
     border: 2px solid var(--nord3);
     padding: 20px;
     transition: all 0.3s ease;
@@ -438,7 +438,7 @@ form .btn {
     cursor: pointer;
     transition: all 0.3s ease;
     min-height: 150px;
-    border-radius: 8px;
+    border-radius: 20px;
 }
 
 .add-source-card:hover {
@@ -553,7 +553,7 @@ form .btn {
     cursor: pointer;
     transition: all 0.3s ease;
     min-height: 300px;
-    border-radius: 8px;
+    border-radius: 20px;
 }
 
 .add-show-card:hover {
@@ -569,7 +569,7 @@ form .btn {
 /* Show Cards */
 .show-card {
     background: var(--nord0);
-    border-radius: 8px;
+    border-radius: 20px;
     border: 2px solid var(--nord3);
     overflow: hidden;
     transition: all 0.3s ease;
@@ -661,6 +661,9 @@ form .btn {
     color: var(--nord6);
     line-height: 1.2;
     text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .settings-tabs {

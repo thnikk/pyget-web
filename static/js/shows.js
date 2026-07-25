@@ -172,7 +172,7 @@ export async function loadTrackedShows() {
                     }
                 </div>
                 <div class="show-card-content">
-                    <div class="show-card-title">${show.show_name}</div>
+                    <div class="show-card-title" title="${show.show_name}">${show.show_name}</div>
                     <div class="show-card-badge"
                          style="background-color: ${show.color || '#88c0d0'}">
                         ${show.profile_name}
