@@ -557,7 +557,8 @@ def get_torrents():
                 'status': t.status,
                 'progress': t.progress,
                 'download_rate': t.rateDownload,
-                'upload_rate': t.rateUpload
+                'upload_rate': t.rateUpload,
+                'done_date': t.doneDate
             })
         return jsonify(result)
     except Exception as e:

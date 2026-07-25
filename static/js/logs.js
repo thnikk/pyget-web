@@ -28,8 +28,26 @@ async function loadLogs() {
     logContainer.style.display = 'none';
 
     try {
-        const response = await api.getNotificationLogs(200);
-        logs = response.logs;
+        const [logResponse, torrents] = await Promise.all([
+            api.getNotificationLogs(200),
+            api.getTransmissionTorrents().catch(() => [])
+        ]);
+
+        const torrentMap = {};
+        torrents.forEach(t => {
+            torrentMap[t.name] = t;
+        });
+
+        logs = logResponse.logs.map(log => {
+            if (log.torrent_name) {
+                log.torrent = torrentMap[log.torrent_name] ||
+                    torrents.find(t =>
+                        t.name.includes(log.torrent_name) ||
+                        log.torrent_name.includes(t.name)
+                    );
+            }
+            return log;
+        });
         renderLogs();
     } catch (error) {
         console.error('Error loading logs:', error);
@@ -37,7 +55,7 @@ async function loadLogs() {
     } finally {
         isLoading = false;
         loadingEl.style.display = 'none';
-        logContainer.style.display = 'block';
+        logContainer.style.display = '';
     }
 }
 
@@ -56,22 +74,20 @@ function renderLogs() {
     }
 
     logContainer.innerHTML = logs.map(log => {
-        const iconClass = log.type;
-        const iconText = getIconText(log.type);
+        const icon = log.torrent ? getTorrentIcon(log.torrent) : getTypeIcon(log.type);
         
         return `
             <div class="log-entry" data-id="${log.id}">
-                <div class="log-icon ${iconClass}">
-                    ${iconText}
+                <div class="log-icon ${icon.class}">
+                    <i class="fa-solid ${icon.name}"></i>
                 </div>
                 <div class="log-content">
                     <div class="log-message">
                         ${log.message}
-                        <span class="log-type-badge ${log.type}">${log.type}</span>
                     </div>
                     <div class="log-timestamp">
-                        ${formatTimestamp(log.timestamp)}
-                        ${log.torrent_name ? `<div class="log-filename">${log.torrent_name}</div>` : ''}
+                        ${formatTimestamp(log.timestamp, log.torrent)}
+                        ${log.torrent ? formatTorrentStatus(log.torrent) : ''}
                     </div>
                 </div>
             </div>
@@ -79,45 +95,83 @@ function renderLogs() {
     }).join('');
 }
 
-function getIconText(type) {
-    switch (type) {
-        case 'new':
-            return '✓';
-        case 'replacement':
-            return '↻';
-        case 'test':
-            return '⚙';
-        default:
-            return '•';
-    }
+function getTorrentIcon(torrent) {
+    const map = {
+        'downloading':     { name: 'fa-download', class: 'downloading' },
+        'seeding':         { name: 'fa-upload',   class: 'seeding' },
+        'stopped':         { name: 'fa-pause',    class: 'stopped' },
+        'check pending':   { name: 'fa-spinner',  class: 'checking' },
+        'checking':        { name: 'fa-spinner',  class: 'checking' },
+        'download pending':{ name: 'fa-clock',    class: 'pending' },
+        'seed pending':    { name: 'fa-clock',    class: 'pending' }
+    };
+    return map[torrent.status] || { name: 'fa-circle', class: 'stopped' };
 }
 
-function formatTimestamp(timestamp) {
+function getTypeIcon(type) {
+    const map = {
+        'new':          { name: 'fa-circle-check', class: 'new' },
+        'replacement':  { name: 'fa-rotate',       class: 'replacement' },
+        'test':         { name: 'fa-vial',         class: 'test' }
+    };
+    return map[type] || { name: 'fa-circle', class: '' };
+}
+
+function formatTorrentStatus(torrent) {
+    const statusLabels = {
+        'stopped': 'Stopped',
+        'check pending': 'Check pending',
+        'checking': 'Checking',
+        'download pending': 'Download pending',
+        'downloading': 'Downloading',
+        'seed pending': 'Seed pending',
+        'seeding': 'Seeding'
+    };
+    const label = statusLabels[torrent.status] || 'Unknown';
+    let details = label;
+
+    if (torrent.status === 'downloading') {
+        const pct = Math.round(torrent.progress);
+        const rate = formatSpeed(torrent.download_rate);
+        details = `${label} ${pct}% (${rate})`;
+    } else if (torrent.status === 'seeding') {
+        const rate = formatSpeed(torrent.upload_rate);
+        details = `${label} (↑ ${rate})`;
+    } else if (torrent.progress > 0 && torrent.progress < 100) {
+        details = `${label} ${Math.round(torrent.progress)}%`;
+    }
+
+    const statusClass = torrent.status === 'seeding' ? 'seeding' :
+                        torrent.status === 'downloading' ? 'downloading' :
+                        'stopped';
+    return `<span class="torrent-status-badge ${statusClass}">${details}</span>`;
+}
+
+function formatSpeed(bytesPerSecond) {
+    if (bytesPerSecond === 0) return '0 B/s';
+    const units = ['B/s', 'KB/s', 'MB/s', 'GB/s'];
+    const i = Math.floor(Math.log(bytesPerSecond) / Math.log(1024));
+    const val = bytesPerSecond / Math.pow(1024, i);
+    return `${val.toFixed(1)} ${units[i]}`;
+}
+
+function formatTimestamp(timestamp, torrent) {
     const date = new Date(timestamp);
     const now = new Date();
     const diff = now - date;
-    
-    // If within last 24 hours, show relative time
-    if (diff < 24 * 60 * 60 * 1000) {
-        if (diff < 60 * 1000) {
-            return 'Just now';
-        } else if (diff < 60 * 60 * 1000) {
-            const minutes = Math.floor(diff / (60 * 1000));
-            return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
-        } else {
-            const hours = Math.floor(diff / (60 * 60 * 1000));
-            return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
-        }
-    }
-    
-    // Otherwise show formatted date
-    return date.toLocaleString('en-US', {
+
+    const isComplete = torrent && torrent.progress >= 100;
+    const prefix = isComplete ? 'Completed on ' : 'Added on ';
+
+    const time = date.toLocaleString('en-US', {
         month: 'short',
         day: 'numeric',
         year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
         hour: '2-digit',
         minute: '2-digit'
     });
+
+    return prefix + time;
 }
 
 async function clearLogs() {

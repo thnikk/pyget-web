@@ -79,6 +79,9 @@ export const api = {
     
     getPathSuggestions: (path) => request(`/utils/path-suggestions?path=${encodeURIComponent(path)}`),
     
+    // Transmission methods
+    getTransmissionTorrents: () => request('/transmission/torrents'),
+
     // Notification methods
     getNotificationSettings: () => request('/notifications/settings'),
     saveNotificationSettings: (data) => request('/notifications/settings', {
