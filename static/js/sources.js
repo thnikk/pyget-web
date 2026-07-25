@@ -10,7 +10,7 @@ export async function loadSources() {
 
         let content = `
             <div class="add-source-card" id="add-source-card-btn">
-                <span class="material-icons">add</span>
+                <i class="fa-solid fa-plus"></i>
             </div>
         `;
 

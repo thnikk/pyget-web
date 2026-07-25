@@ -47,7 +47,7 @@ function renderLogs() {
     if (logs.length === 0) {
         logContainer.innerHTML = `
             <div class="log-empty">
-                <span class="material-icons" style="font-size: 48px; margin-bottom: 16px; display: block;">notifications_off</span>
+                <i class="fa-solid fa-bell-slash" style="font-size: 48px; margin-bottom: 16px; display: block;"></i>
                 <p>No notification history yet</p>
                 <p style="font-size: 14px; margin-top: 8px;">Notifications will appear here when new torrents are added</p>
             </div>

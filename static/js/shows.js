@@ -147,7 +147,7 @@ export async function loadTrackedShows() {
 
         let content = `
             <div class="add-show-card" id="add-show-card-btn">
-                <span class="material-icons">add</span>
+                <i class="fa-solid fa-plus"></i>
             </div>
         `;
 
@@ -225,7 +225,7 @@ export function openEditShowModal(show) {
 export async function fetchAnidbArtwork(showId) {
     const btn = document.getElementById('fetch-anidb-art-btn');
     btn.disabled = true;
-    btn.innerHTML = '<span class="material-icons">hourglass_top</span> Fetching...';
+    btn.innerHTML = '<i class="fa-solid fa-hourglass-start"></i> Fetching...';
 
     try {
         await api.fetchArtFromAnidb(showId);
@@ -236,7 +236,7 @@ export async function fetchAnidbArtwork(showId) {
         showNotification(error.message || 'No artwork found on AniDB', 'error');
     } finally {
         btn.disabled = false;
-        btn.innerHTML = '<span class="material-icons">image_search</span> Fetch Artwork from AniDB';
+        btn.innerHTML = '<i class="fa-solid fa-image"></i> Fetch Artwork from AniDB';
     }
 }
 

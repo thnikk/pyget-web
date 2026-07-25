@@ -82,7 +82,7 @@ body {
 .navbar-tabs {
     display: flex;
     gap: 8px;
-    flex: 1;
+    margin-left: auto;
 }
 
 .nav-tab {
@@ -96,6 +96,10 @@ body {
     border-radius: 50px;
     display: flex;
     align-items: center;
+}
+
+.nav-tab .fa-solid {
+    margin-right: 8px;
 }
 
 .nav-tab:hover {
@@ -319,7 +323,7 @@ form .btn {
     align-self: flex-start !important;
 }
 
-.btn .material-icons {
+.btn .fa-solid {
     font-size: 20px;
 }
 
@@ -328,7 +332,7 @@ form .btn {
     font-size: 0.9rem;
 }
 
-.btn-small .material-icons {
+.btn-small .fa-solid {
     font-size: 18px;
 }
 
@@ -352,7 +356,7 @@ form .btn {
     transition: background 0.3s ease;
 }
 
-.btn-icon .material-icons {
+.btn-icon .fa-solid {
     font-size: 24px;
     color: var(--nord6);
 }
@@ -443,7 +447,7 @@ form .btn {
     color: var(--nord8);
 }
 
-.add-source-card .material-icons {
+.add-source-card .fa-solid {
     font-size: 48px;
 }
 
@@ -558,7 +562,7 @@ form .btn {
     color: var(--nord8);
 }
 
-.add-show-card .material-icons {
+.add-show-card .fa-solid {
     font-size: 48px;
 }
 
@@ -610,7 +614,7 @@ form .btn {
     transform: scale(1.1);
 }
 
-.show-card-remove .material-icons {
+.show-card-remove .fa-solid {
     font-size: 20px;
 }
 

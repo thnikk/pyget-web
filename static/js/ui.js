@@ -32,12 +32,12 @@ function createToast(message, type, duration) {
     
     toast.innerHTML = `
         <div class="toast-icon">
-            <span class="material-icons">${icon}</span>
+            <i class="fa-solid ${icon}"></i>
         </div>
         <div class="toast-message">${escapeHtml(message)}</div>
         ${duration > 0 ? '<div class="toast-progress"></div>' : ''}
         <button class="toast-close" onclick="removeToast(document.getElementById('${toastId}'))">
-            <span class="material-icons">close</span>
+            <i class="fa-solid fa-xmark"></i>
         </button>
     `;
     
@@ -46,12 +46,12 @@ function createToast(message, type, duration) {
 
 function getIconForType(type) {
     const icons = {
-        success: 'check_circle',
-        error: 'error',
-        warning: 'warning',
-        info: 'info'
+        success: 'fa-circle-check',
+        error: 'fa-circle-xmark',
+        warning: 'fa-triangle-exclamation',
+        info: 'fa-circle-info'
     };
-    return icons[type] || 'info';
+    return icons[type] || 'fa-circle-info';
 }
 
 function getToastContainer() {

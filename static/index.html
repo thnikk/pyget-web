@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pyget</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
-          rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <meta name="color-scheme" content="only light">
     <meta name="darkreader-lock">
 </head>
@@ -17,14 +16,14 @@
             <!-- <img src="icon-header.svg" class="navbar-icon" alt="Pyget Icon"> -->
             <h1 class="navbar-title">Pyget</h1>
             <div class="navbar-tabs">
-                <button class="nav-tab" data-tab="shows">Shows</button>
-                <button class="nav-tab" data-tab="sources">Sources</button>
-                <button class="nav-tab" data-tab="schedule">Schedule</button>
-                <button class="nav-tab" data-tab="log">Log</button>
+                <button class="nav-tab" data-tab="shows"><i class="fa-solid fa-tv"></i> Shows</button>
+                <button class="nav-tab" data-tab="sources"><i class="fa-solid fa-rss"></i> Sources</button>
+                <button class="nav-tab" data-tab="schedule"><i class="fa-solid fa-calendar-days"></i> Schedule</button>
+                <button class="nav-tab" data-tab="log"><i class="fa-solid fa-list"></i> Log</button>
+                <button id="settings-btn" class="btn btn-icon" style="margin-left: auto;">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
             </div>
-            <button id="settings-btn" class="btn btn-icon">
-                <span class="material-icons">settings</span>
-            </button>
         </div>
     </nav>
 
@@ -71,11 +70,11 @@
                     <h2>Notification Log</h2>
                     <div class="section-actions">
                         <button id="refresh-logs-btn" class="btn btn-secondary">
-                            <span class="material-icons">refresh</span>
+                            <i class="fa-solid fa-rotate-right"></i>
                             Refresh
                         </button>
                         <button id="clear-logs-btn" class="btn btn-danger">
-                            <span class="material-icons">delete_sweep</span>
+                            <i class="fa-solid fa-eraser"></i>
                             Clear Log
                         </button>
                     </div>
@@ -151,12 +150,12 @@
                     </div>
                     <div class="button-container">
                         <button type="button" class="btn btn-danger" id="delete-source-btn">
-                            <span class="material-icons">delete</span> Delete Source
+                            <i class="fa-solid fa-trash-can"></i> Delete Source
                         </button>
                         <div class="button-container">
                         <div class="button-container">
                             <button type="submit" class="btn btn-primary">
-                                <span class="material-icons">save</span>
+                                <i class="fa-solid fa-floppy-disk"></i>
                                 Save Settings
                             </button>
                         </div>
@@ -215,12 +214,12 @@
 
                         
                         <button type="button" id="test-notification-btn" class="btn btn-secondary">
-                            <span class="material-icons">notifications</span>
+                            <i class="fa-solid fa-bell"></i>
                             Test Notification
                         </button>
                         
                         <button type="submit" class="btn btn-primary">
-                            <span class="material-icons">save</span>
+                            <i class="fa-solid fa-floppy-disk"></i>
                             Save Settings
                         </button>
                     </form>
@@ -228,7 +227,7 @@
                     <div class="settings-section">
                         <h4>Maintenance</h4>
                         <button id="cleanup-artwork-btn" class="btn btn-danger">
-                            <span class="material-icons">delete_sweep</span>
+                            <i class="fa-solid fa-eraser"></i>
                             Clear Unused Artwork
                         </button>
                     </div>
@@ -246,7 +245,7 @@
                                    placeholder="9091" required>
                         </div>
                         <button type="submit" class="btn btn-primary">
-                            <span class="material-icons">save</span>
+                            <i class="fa-solid fa-floppy-disk"></i>
                             Save Settings
                         </button>
                     </form>
@@ -267,10 +266,8 @@
                     <div class="search-container" style="margin-bottom: 20px; position: relative;">
                         <input type="text" id="show-search"
                                placeholder="Search available shows..." style="padding-right: 30px;">
-                        <span id="clear-search-btn" class="material-icons"
-                              style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); cursor: pointer; display: none; color: #d8dee9;">
-                            close
-                        </span>
+<i id="clear-search-btn" class="fa-solid fa-xmark"
+      style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); cursor: pointer; display: none; color: #d8dee9;"></i>
                     </div>
                     <div id="shows-list-parent">
                         <div id="shows-list" class="list-container">
@@ -294,10 +291,10 @@
                         </div>
                         <div class="button-container">
                             <button type="button" class="btn btn-secondary" id="add-show-back-btn">
-                                <span class="material-icons">arrow_back</span> Back
+                                <i class="fa-solid fa-arrow-left"></i> Back
                             </button>
                             <button type="submit" class="btn btn-primary">
-                                <span class="material-icons">add</span> Track Show
+                                <i class="fa-solid fa-plus"></i> Track Show
                             </button>
                         </div>
                     </form>
@@ -335,15 +332,15 @@
                     </div>
                     <div class="form-group">
                         <button type="button" class="btn btn-secondary" id="fetch-anidb-art-btn" style="width: 100%;">
-                            <span class="material-icons">image_search</span> Fetch Artwork from AniDB
+                            <i class="fa-solid fa-image"></i> Fetch Artwork from AniDB
                         </button>
                     </div>
                     <div class="button-container">
                         <button type="button" class="btn btn-danger" id="untrack-show-btn">
-                            <span class="material-icons">delete</span> Untrack Show
+                            <i class="fa-solid fa-trash-can"></i> Untrack Show
                         </button>
                         <button type="submit" class="btn btn-primary">
-                            <span class="material-icons">save</span> Save Changes
+                            <i class="fa-solid fa-floppy-disk"></i> Save Changes
                         </button>
                     </div>
                 </form>
@@ -393,7 +390,7 @@
                     </div>
 
                     <button type="submit" class="btn btn-primary">
-                        <span class="material-icons">check</span> Complete Setup
+                        <i class="fa-solid fa-check"></i> Complete Setup
                     </button>
                 </form>
             </div>
