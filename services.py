@@ -6,8 +6,13 @@ import feedparser
 import transmissionrpc
 from datetime import datetime, timedelta, timezone
 from config import DB_PATH
-from utils import parse_anime_title, build_feed_url, parse_episode_info
+from utils import (
+    parse_anime_title, build_feed_url, parse_episode_info,
+    extract_torrent_url, get_entry_seeders, is_batch_release,
+    strip_release_tags
+)
 from notifications import send_torrent_notification
+from organizer import organize_download
 
 def get_transmission_client():
     """Connect to Transmission daemon."""
@@ -589,3 +594,195 @@ def monitor_downloads_for_replacement():
             print(f"Error in replacement monitor: {e}")
             
         time.sleep(60)  # Check every minute
+
+
+def search_batch_torrents(query):
+    """
+    Search every configured source's indexer directly (bypassing
+    cached_shows, which filters out batches) for one-off downloads.
+    Results from all sources are merged and sorted by seed count.
+    """
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT DISTINCT base_url FROM feed_profiles')
+    base_urls = [row['base_url'] for row in c.fetchall()]
+    conn.close()
+
+    results = []
+    for base_url in base_urls:
+        # Deliberately ignore each profile's uploader/quality filters
+        # here; those are tuned for tracking specific fansub groups,
+        # not a one-off search.
+        feed_url = build_feed_url(base_url, show=query)
+        feed = feedparser.parse(feed_url)
+
+        for entry in feed.entries:
+            torrent_url = extract_torrent_url(entry)
+            if not torrent_url:
+                continue
+
+            published_at = None
+            if hasattr(entry, 'published_parsed'):
+                published_at = datetime.fromtimestamp(
+                    calendar.timegm(entry.published_parsed),
+                    timezone.utc
+                ).strftime('%Y-%m-%d %H:%M:%S')
+
+            results.append({
+                'title': entry.title,
+                'suggested_name': strip_release_tags(entry.title),
+                'torrent_url': torrent_url,
+                'published_at': published_at,
+                'seeders': get_entry_seeders(entry),
+                'size': entry.get('nyaa_size'),
+                'is_batch': is_batch_release(entry.title),
+                'source': base_url
+            })
+
+    # Unknown seed counts sort last rather than first
+    results.sort(
+        key=lambda r: r['seeders'] if r['seeders'] is not None else -1,
+        reverse=True
+    )
+    return results
+
+
+def add_one_shot_download(show_name, season_name, multi_season,
+                           torrent_url, torrent_name, strip_underscores):
+    """
+    Add a one-off torrent to Transmission for a batch/season
+    download. Tracked separately from continuously-tracked shows in
+    one_shot_downloads, since there's no RSS feed to keep polling.
+    """
+    tc, download_dir = get_transmission_client()
+    if not tc or not download_dir:
+        return None, 'Cannot connect to Transmission'
+
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    c = conn.cursor()
+    c.execute('''
+        INSERT INTO one_shot_downloads
+        (show_name, season_name, multi_season, strip_underscores,
+         torrent_url, torrent_name, download_path, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 'downloading')
+    ''', (show_name, season_name, multi_season, strip_underscores,
+          torrent_url, torrent_name, ''))
+    conn.commit()
+    row_id = c.lastrowid
+
+    # Each download gets its own staging directory so, once it
+    # completes, its content can be identified unambiguously rather
+    # than guessed from the torrent's internal naming.
+    staging_dir = os.path.join(
+        download_dir, '.pyget_staging', f'download_{row_id}')
+
+    try:
+        os.makedirs(staging_dir, exist_ok=True)
+        tc.add_torrent(torrent_url, download_dir=staging_dir)
+    except Exception as e:
+        c.execute('''
+            UPDATE one_shot_downloads
+            SET status = 'error', status_message = ?
+            WHERE id = ?
+        ''', (str(e), row_id))
+        conn.commit()
+        conn.close()
+        return None, str(e)
+
+    c.execute('''
+        UPDATE one_shot_downloads SET download_path = ? WHERE id = ?
+    ''', (staging_dir, row_id))
+    conn.commit()
+    conn.close()
+
+    return row_id, None
+
+
+def organize_one_shot_download(row_id):
+    """
+    Restructure a completed one-off download into the Jellyfin
+    layout and record the result. Safe to call again on a download
+    that previously errored, to retry after fixing the problem.
+    """
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM one_shot_downloads WHERE id = ?', (row_id,))
+    row = c.fetchone()
+
+    if not row:
+        conn.close()
+        return
+
+    c.execute('''
+        UPDATE one_shot_downloads SET status = 'organizing' WHERE id = ?
+    ''', (row_id,))
+    conn.commit()
+
+    _, download_dir = get_transmission_client()
+    show_dir = os.path.join(download_dir, row['show_name'])
+
+    try:
+        note = organize_download(
+            row['download_path'],
+            show_dir,
+            row['season_name'],
+            bool(row['multi_season']),
+            bool(row['strip_underscores'])
+        )
+        c.execute('''
+            UPDATE one_shot_downloads
+            SET status = 'organized', status_message = ?,
+                download_path = ?, organized_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ''', (note, show_dir, row_id))
+        print(f"Organized batch download: {row['show_name']}")
+    except Exception as e:
+        c.execute('''
+            UPDATE one_shot_downloads
+            SET status = 'error', status_message = ?
+            WHERE id = ?
+        ''', (str(e), row_id))
+        print(f"Error organizing {row['show_name']}: {e}")
+
+    conn.commit()
+    conn.close()
+
+
+def monitor_one_shot_downloads():
+    """
+    Background task that watches Transmission for one-off downloads
+    to finish, then triggers file organization.
+    """
+    print("Starting one-shot download monitor...")
+
+    while True:
+        try:
+            conn = sqlite3.connect(DB_PATH, timeout=30)
+            conn.row_factory = sqlite3.Row
+            c = conn.cursor()
+            c.execute('''
+                SELECT id, download_path FROM one_shot_downloads
+                WHERE status = 'downloading'
+            ''')
+            pending = c.fetchall()
+            conn.close()
+
+            if pending:
+                tc, _ = get_transmission_client()
+                if tc:
+                    torrents = tc.get_torrents()
+                    for row in pending:
+                        match = next(
+                            (t for t in torrents
+                             if t.downloadDir == row['download_path']),
+                            None
+                        )
+                        if match and match.progress == 100:
+                            organize_one_shot_download(row['id'])
+
+        except Exception as e:
+            print(f"Error in one-shot download monitor: {e}")
+
+        time.sleep(30)

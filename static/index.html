@@ -19,6 +19,7 @@
                 <button class="nav-tab" data-tab="shows"><i class="fa-solid fa-tv"></i> Shows</button>
                 <button class="nav-tab" data-tab="sources"><i class="fa-solid fa-rss"></i> Sources</button>
                 <button class="nav-tab" data-tab="schedule"><i class="fa-solid fa-calendar-days"></i> Schedule</button>
+                <button class="nav-tab" data-tab="batch"><i class="fa-solid fa-box-archive"></i> Batch</button>
                 <button class="nav-tab" data-tab="log"><i class="fa-solid fa-list"></i> Log</button>
                 <button id="settings-btn" class="btn btn-icon" style="margin-left: auto;">
                     <i class="fa-solid fa-gear"></i>
@@ -60,6 +61,38 @@
                 
                 <h2 style="margin-top: 40px; margin-bottom: 20px;">Upcoming Releases</h2>
                 <div id="upcoming-list" class="upcoming-container"></div>
+            </div>
+        </div>
+
+        <!-- Batch Tab -->
+        <div id="batch-tab" class="tab-content">
+            <div class="section">
+                <div class="section-header">
+                    <h2>Batch Download</h2>
+                </div>
+                <div class="batch-search-row">
+                    <input type="text" id="batch-search-input"
+                           placeholder="Search for a completed show...">
+                    <button id="batch-search-btn" class="btn btn-primary">
+                        <i class="fa-solid fa-magnifying-glass"></i> Search
+                    </button>
+                    <div class="toggle-container">
+                        <input type="checkbox" id="batch-only-filter">
+                        <label for="batch-only-filter" class="toggle-switch">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span>Batches only</span>
+                    </div>
+                </div>
+                <div id="batch-results" class="list-container"></div>
+
+                <div class="section-header" style="margin-top: 40px;">
+                    <h2>Downloads</h2>
+                    <button id="batch-refresh-btn" class="btn btn-secondary">
+                        <i class="fa-solid fa-rotate-right"></i> Refresh
+                    </button>
+                </div>
+                <div id="batch-downloads-list" class="list-container"></div>
             </div>
         </div>
 
@@ -348,6 +381,76 @@
         </div>
     </div>
 
+
+    <!-- Modal for configuring a batch download before starting it -->
+    <div id="batch-download-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Configure Download</h3>
+                <span class="close-batch-download close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="batch-download-form" class="form-container">
+                    <input type="hidden" id="batch-torrent-url">
+                    <input type="hidden" id="batch-torrent-name">
+                    <div class="form-group">
+                        <label for="batch-show-name">Show Name:</label>
+                        <input type="text" id="batch-show-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="batch-season-name">Season:</label>
+                        <input type="text" id="batch-season-name"
+                               value="Season 01">
+                        <small class="form-help">
+                            Folder name for the download, unless this
+                            is a multi-season release.
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <label for="batch-multi-season">
+                            Multi-Season Release:
+                        </label>
+                        <div class="toggle-container">
+                            <input type="checkbox" id="batch-multi-season">
+                            <label for="batch-multi-season"
+                                   class="toggle-switch">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <small class="form-help">
+                            Split into per-season folders instead of
+                            using the season name above. Folders
+                            without a recognizable season number are
+                            left as-is for manual sorting.
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <label for="batch-strip-underscores">
+                            Replace Underscores with Spaces:
+                        </label>
+                        <div class="toggle-container">
+                            <input type="checkbox"
+                                   id="batch-strip-underscores">
+                            <label for="batch-strip-underscores"
+                                   class="toggle-switch">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <small class="form-help">
+                            Renames files so Jellyfin's parser can
+                            read them correctly.
+                        </small>
+                    </div>
+                    <div class="button-container">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa-solid fa-download"></i>
+                            Start Download
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <!-- Setup Modal -->
     <div id="setup-modal" class="modal">

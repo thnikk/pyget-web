@@ -1404,6 +1404,124 @@ form .btn {
     }
 }
 
+/* Batch Download Tab */
+.batch-search-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.batch-search-row input[type="text"] {
+    flex: 1;
+    padding: 10px 15px;
+    background: var(--nord1);
+    border: 2px solid var(--nord3);
+    border-radius: 999px;
+    color: var(--nord6);
+    font-size: 1rem;
+}
+
+.batch-search-row input[type="text"]:focus {
+    outline: none;
+    border-color: var(--nord8);
+    background: var(--nord2);
+}
+
+.batch-result-item {
+    background: var(--nord1);
+    border: 2px solid var(--nord3);
+    padding: 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.batch-result-item:hover {
+    border-color: var(--nord8);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+.batch-result-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--nord6);
+    margin-bottom: 8px;
+}
+
+.batch-tag {
+    display: inline-block;
+    background: var(--nord14);
+    color: var(--nord0);
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    margin-right: 8px;
+}
+
+.batch-result-meta {
+    display: flex;
+    gap: 15px;
+    color: var(--nord4);
+    font-size: 0.85rem;
+}
+
+.batch-download-item {
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+}
+
+.batch-download-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.batch-download-title {
+    font-weight: 600;
+    color: var(--nord6);
+}
+
+.batch-download-status {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+.batch-download-status.status-downloading {
+    color: var(--nord12);
+}
+
+.batch-download-status.status-organizing {
+    color: var(--nord13);
+}
+
+.batch-download-status.status-organized {
+    color: var(--nord14);
+}
+
+.batch-download-status.status-error {
+    color: var(--nord11);
+}
+
+.batch-download-note {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+.batch-download-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
 /* Loading Spinner */
 .loading-spinner {
     position: absolute;

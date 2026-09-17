@@ -3,6 +3,10 @@ import { loadTrackedShows, loadShows, handleAddShowDetailsSubmit, handleEditShow
 import { loadSchedule } from './schedule.js';
 import { loadSettings, handleGeneralSettingsSubmit, handleTransmissionSettingsSubmit, handleCleanupArtwork, checkSetup, handleSetupSubmit, handlePathInput, handlePathKeydown } from './settings.js';
 import { initLogTab } from './logs.js';
+import {
+    initBatchTab, handleBatchSearch, renderBatchResults,
+    handleBatchDownloadSubmit, loadBatchDownloads
+} from './batch.js';
 import { closeModal, showNotification } from './ui.js';
 import { api } from './api.js';
 
@@ -28,6 +32,7 @@ window.switchToTab = (tabName) => {
     if (tabName === 'sources') loadSources();
     else if (tabName === 'shows') loadTrackedShows();
     else if (tabName === 'schedule') loadSchedule();
+    else if (tabName === 'batch') initBatchTab();
     else if (tabName === 'log') initLogTab();
 
     // Save the active tab
@@ -73,6 +78,7 @@ document.getElementById('test-notification-btn').onclick = async () => {
     }
 };
 document.getElementById('source-form').onsubmit = handleSourceSubmit;
+document.getElementById('batch-download-form').onsubmit = handleBatchDownloadSubmit;
 document.getElementById('add-show-details-form').onsubmit = handleAddShowDetailsSubmit;
 document.getElementById('edit-show-form').onsubmit = handleEditShowSubmit;
 document.getElementById('setup-form').onsubmit = handleSetupSubmit;
@@ -95,11 +101,20 @@ document.querySelector('.close-settings').onclick = () => closeModal('settings-m
 document.querySelector('.close-add').onclick = resetAddShowModal;
 document.querySelector('.close-edit').onclick = () => closeModal('source-modal');
 document.querySelector('.close-edit-show').onclick = () => closeModal('edit-show-modal');
+document.querySelector('.close-batch-download').onclick = () => closeModal('batch-download-modal');
 
 document.getElementById('add-show-back-btn').onclick = () => {
     document.getElementById('add-show-page-2').style.display = 'none';
     document.getElementById('add-show-page-1').style.display = 'block';
 };
+
+// Batch tab
+document.getElementById('batch-search-btn').onclick = handleBatchSearch;
+document.getElementById('batch-search-input').onkeydown = (e) => {
+    if (e.key === 'Enter') handleBatchSearch();
+};
+document.getElementById('batch-only-filter').onchange = renderBatchResults;
+document.getElementById('batch-refresh-btn').onclick = loadBatchDownloads;
 
 // Search functionality
 let searchTimeout;

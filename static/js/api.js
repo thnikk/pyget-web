@@ -97,6 +97,23 @@ export const api = {
     clearNotificationLogs: () => request('/notifications/logs/clear', { method: 'POST' }),
     testNotification: () => request('/notifications/test', { method: 'POST' }),
     
+    // Batch download methods
+    searchBatch: (query) => request(
+        `/batch/search?q=${encodeURIComponent(query)}`
+    ),
+    getBatchDownloads: () => request('/batch/downloads'),
+    startBatchDownload: (data) => request('/batch/downloads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    }),
+    deleteBatchDownload: (id) => request(`/batch/downloads/${id}`, {
+        method: 'DELETE'
+    }),
+    retryBatchDownload: (id) => request(`/batch/downloads/${id}/retry`, {
+        method: 'POST'
+    }),
+
     // Generic methods
     get: (path) => request(path),
     post: (path, data) => request(path, {

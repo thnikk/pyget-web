@@ -11,7 +11,11 @@ from PIL import Image
 from config import DB_PATH, DATA_DIR
 from database import get_db_connection
 from utils import build_feed_url, extract_episode_number, parse_anime_title
-from services import check_single_show, cache_single_profile, get_transmission_client
+from services import (
+    check_single_show, cache_single_profile, get_transmission_client,
+    search_batch_torrents, add_one_shot_download,
+    organize_one_shot_download
+)
 from notifications import send_test_notification
 from anime_art import fetch_artwork_url
 
@@ -995,3 +999,82 @@ def clear_notification_logs():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@api_bp.route('/api/batch/search', methods=['GET'])
+def search_batch():
+    """Search all configured sources for one-off batch/season torrents."""
+    query = request.args.get('q', '').strip()
+
+    if not query:
+        return jsonify({'error': 'q is required'}), 400
+
+    results = search_batch_torrents(query)
+    return jsonify(results)
+
+
+@api_bp.route('/api/batch/downloads', methods=['GET', 'POST'])
+def manage_batch_downloads():
+    """List one-off downloads or start a new one."""
+    if request.method == 'GET':
+        conn = get_db_connection()
+        c = conn.cursor()
+        c.execute('''
+            SELECT * FROM one_shot_downloads ORDER BY added_at DESC
+        ''')
+        rows = [dict(row) for row in c.fetchall()]
+        conn.close()
+
+        # Attach live progress for downloads still in Transmission
+        tc, _ = get_transmission_client()
+        torrents = tc.get_torrents() if tc else []
+        for row in rows:
+            row['progress'] = None
+            if row['status'] == 'downloading':
+                match = next(
+                    (t for t in torrents
+                     if t.downloadDir == row['download_path']),
+                    None
+                )
+                if match:
+                    row['progress'] = match.progress
+
+        return jsonify(rows)
+
+    elif request.method == 'POST':
+        data = request.json
+        row_id, error = add_one_shot_download(
+            data['show_name'],
+            data.get('season_name', 'Season 01'),
+            bool(data.get('multi_season', False)),
+            data['torrent_url'],
+            data['torrent_name'],
+            bool(data.get('strip_underscores', False))
+        )
+
+        if error:
+            return jsonify({'error': error}), 503
+
+        return jsonify({'id': row_id, 'status': 'downloading'}), 201
+
+
+@api_bp.route('/api/batch/downloads/<int:row_id>', methods=['DELETE'])
+def delete_batch_download(row_id):
+    """Stop tracking a one-off download. Leaves files in place."""
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute('DELETE FROM one_shot_downloads WHERE id = ?', (row_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({'status': 'removed'})
+
+
+@api_bp.route('/api/batch/downloads/<int:row_id>/retry', methods=['POST'])
+def retry_batch_download(row_id):
+    """Retry organizing a download that previously failed."""
+    threading.Thread(
+        target=organize_one_shot_download,
+        args=(row_id,),
+        daemon=True
+    ).start()
+    return jsonify({'status': 'retrying'})

@@ -62,6 +62,77 @@ def extract_quality(title: str) -> Optional[str]:
         return match.group(1)
     return None
 
+def extract_torrent_url(entry) -> Optional[str]:
+    """Find the .torrent link on a feedparser entry."""
+    if hasattr(entry, 'links'):
+        for link in entry.links:
+            if link.get('type') == 'application/x-bittorrent':
+                return link.get('href')
+    if hasattr(entry, 'link'):
+        return entry.link
+    return None
+
+
+def get_entry_seeders(entry) -> Optional[int]:
+    """
+    Read the seeder count from a Nyaa-style RSS entry, if the feed
+    provides one. Not all indexers expose this.
+    """
+    value = entry.get('nyaa_seeders')
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+# Keywords and patterns that suggest a release is a batch/season
+# pack rather than a single episode.
+BATCH_KEYWORDS = re.compile(
+    r'\b(batch|complete|full\s*season|season\s*pack)\b', re.IGNORECASE)
+EPISODE_RANGE = re.compile(r'\b\d{2,3}\s*[-~]\s*\d{2,3}\b')
+
+
+def is_batch_release(title: str) -> bool:
+    """
+    Heuristic check for whether a torrent title looks like a
+    batch/season release rather than a single episode. Not perfect,
+    used for sorting/filtering, not hard exclusion.
+    """
+    if BATCH_KEYWORDS.search(title):
+        return True
+    if EPISODE_RANGE.search(title):
+        return True
+    return False
+
+
+# Matches "Season 2", "Season_02", "S2", etc. in a directory name.
+SEASON_PATTERN = re.compile(
+    r'season\s*[\s_.-]?(\d{1,2})\b|(?<![a-z])s(\d{1,2})\b',
+    re.IGNORECASE)
+
+
+def extract_season_number(name: str) -> Optional[str]:
+    """Extract a zero-padded season number from a directory name."""
+    match = SEASON_PATTERN.search(name)
+    if not match:
+        return None
+    num = match.group(1) or match.group(2)
+    return num.zfill(2)
+
+
+def strip_release_tags(title: str) -> str:
+    """
+    Remove bracketed and parenthesized release tags (subgroup,
+    quality, batch markers, etc.) from a torrent title, leaving a
+    cleaner suggested show name.
+    """
+    cleaned = re.sub(r'\[[^\]]*\]', '', title)
+    cleaned = re.sub(r'\([^)]*\)', '', cleaned)
+    return re.sub(r'\s+', ' ', cleaned).strip()
+
+
 def parse_episode_info(title: str) -> dict:
     """
     Parse comprehensive episode information from title.

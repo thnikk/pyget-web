@@ -15,7 +15,8 @@ from services import (
     check_and_download_torrents,
     update_cached_shows,
     update_cached_shows_once,
-    monitor_downloads_for_replacement
+    monitor_downloads_for_replacement,
+    monitor_one_shot_downloads
 )
 
 
@@ -72,6 +73,13 @@ if __name__ == '__main__':
         daemon=True
     )
     replacement_thread.start()
+
+    # Start one-off batch download monitor thread
+    batch_thread = threading.Thread(
+        target=monitor_one_shot_downloads,
+        daemon=True
+    )
+    batch_thread.start()
 
     # Detect if running from PyInstaller build
     is_pyinstaller = getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')

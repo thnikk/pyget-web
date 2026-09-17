@@ -137,6 +137,24 @@ def init_db():
     except sqlite3.OperationalError:
         pass  # Column already exists
 
+    # One-off batch/season downloads table (not continuously tracked)
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS one_shot_downloads (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            show_name TEXT NOT NULL,
+            season_name TEXT NOT NULL,
+            multi_season BOOLEAN DEFAULT FALSE,
+            strip_underscores BOOLEAN DEFAULT FALSE,
+            torrent_url TEXT NOT NULL,
+            torrent_name TEXT NOT NULL,
+            download_path TEXT NOT NULL,
+            status TEXT DEFAULT 'downloading',
+            status_message TEXT,
+            added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            organized_at TIMESTAMP
+        )
+    ''')
+
     # Settings table for transmission config
     c.execute('''
         CREATE TABLE IF NOT EXISTS settings (
