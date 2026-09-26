@@ -376,7 +376,7 @@ def check_single_show(tracked_show_id):
             conn.close()
             return
 
-        show_id, show_name, feed_url, profile_id, added_at, season_name, max_age, image_path = show
+        show_id, show_name, feed_url, profile_id, added_at, season_name, max_age, image_path = show[:8]
 
         tc, download_dir = get_transmission_client()
         if not tc:
