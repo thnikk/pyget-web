@@ -166,7 +166,7 @@ export async function loadTrackedShows() {
 
         content += tracked.map(show => `
             <div class="show-card" 
-                 data-show='${JSON.stringify(show)}'
+                 data-show='${escapeHtml(JSON.stringify(show))}'
                  id="show-card-${show.id}">
                 <button class="show-card-remove" data-show-id="${show.id}" title="Untrack">
                     <i class="fa-solid fa-trash-can"></i>
