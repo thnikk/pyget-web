@@ -56,6 +56,7 @@ def init_db():
             season_name TEXT,
             max_age INTEGER,
             image_path TEXT,
+            directory_name TEXT,
             FOREIGN KEY (profile_id) REFERENCES feed_profiles (id)
         )
     ''')
@@ -79,6 +80,11 @@ def init_db():
     try:
         c.execute('ALTER TABLE tracked_shows ADD COLUMN anidb_id TEXT')
         print("Added anidb_id to tracked_shows")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute('ALTER TABLE tracked_shows ADD COLUMN directory_name TEXT')
+        print("Added directory_name to tracked_shows")
     except sqlite3.OperationalError:
         pass
 

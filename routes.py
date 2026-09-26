@@ -260,7 +260,7 @@ def manage_tracked_shows():
     if request.method == 'GET':
         c.execute('''
             SELECT ts.id, ts.show_name, ts.feed_url, ts.profile_id, ts.added_at,
-                   ts.season_name, ts.max_age, ts.image_path,
+                   ts.season_name, ts.max_age, ts.image_path, ts.directory_name, ts.anidb_id,
                    fp.name as profile_name, fp.base_url, fp.uploader, fp.quality, fp.color
             FROM tracked_shows ts
             LEFT JOIN feed_profiles fp ON ts.profile_id = fp.id
@@ -277,6 +277,8 @@ def manage_tracked_shows():
                 'season_name': row['season_name'],
                 'max_age': row['max_age'],
                 'image_path': row['image_path'],
+                'directory_name': row['directory_name'],
+                'anidb_id': row['anidb_id'],
                 'profile_name': row['profile_name'],
                 'base_url': row['base_url'],
                 'uploader': row['uploader'],
@@ -292,6 +294,7 @@ def manage_tracked_shows():
         profile_id = data['profile_id']
         season_name = data.get('season_name')
         max_age = data.get('max_age')
+        directory_name = data.get('directory_name')
 
         # Get profile details
         c.execute('SELECT * FROM feed_profiles WHERE id = ?',
@@ -309,9 +312,9 @@ def manage_tracked_shows():
         feed_url = build_feed_url(base_url, uploader, quality, show_name)
 
         c.execute('''
-            INSERT INTO tracked_shows (show_name, feed_url, profile_id, season_name, max_age)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (show_name, feed_url, profile_id, season_name, max_age))
+            INSERT INTO tracked_shows (show_name, feed_url, profile_id, season_name, max_age, directory_name)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (show_name, feed_url, profile_id, season_name, max_age, directory_name))
         conn.commit()
         tracked_id = c.lastrowid
         conn.close()
@@ -530,13 +533,14 @@ def delete_tracked_show(tracked_id):
         data = request.json
         c.execute('''
             UPDATE tracked_shows
-            SET show_name = ?, season_name = ?, max_age = ?, anidb_id = ?
+            SET show_name = ?, season_name = ?, max_age = ?, anidb_id = ?, directory_name = ?
             WHERE id = ?
         ''', (
             data['show_name'],
             data.get('season_name'),
             data.get('max_age'),
             data.get('anidb_id'),
+            data.get('directory_name'),
             tracked_id
         ))
         conn.commit()

@@ -147,7 +147,8 @@ def check_and_download_torrents():
 
             for show in shows_to_check:
                 show_id, show_name, feed_url, profile_id, added_at, season_name, max_age, image_path = show[:8]
-                download_path = os.path.join(download_dir, show_name, season_name) if season_name else os.path.join(download_dir, show_name)
+                dir_name = show['directory_name'] or show_name
+                download_path = os.path.join(download_dir, dir_name, season_name) if season_name else os.path.join(download_dir, dir_name)
 
                 try:
                     # Parse the RSS feed
@@ -377,6 +378,7 @@ def check_single_show(tracked_show_id):
             return
 
         show_id, show_name, feed_url, profile_id, added_at, season_name, max_age, image_path = show[:8]
+        dir_name = show['directory_name'] or show_name
 
         tc, download_dir = get_transmission_client()
         if not tc:
@@ -384,7 +386,7 @@ def check_single_show(tracked_show_id):
             conn.close()
             return
 
-        download_path = os.path.join(download_dir, show_name, season_name) if season_name else os.path.join(download_dir, show_name)
+        download_path = os.path.join(download_dir, dir_name, season_name) if season_name else os.path.join(download_dir, dir_name)
 
         feed = feedparser.parse(feed_url)
 

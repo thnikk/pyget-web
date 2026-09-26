@@ -8,6 +8,7 @@ export function resetAddShowModal() {
     document.getElementById('add-show-page-2').style.display = 'none';
     document.getElementById('add-show-page-1').style.display = 'block';
     document.getElementById('shows-list').innerHTML = '';
+    document.getElementById('add-show-dir-name').value = '';
 }
 
 export function openAddShowModal() {
@@ -111,6 +112,7 @@ export async function trackShow(showName, profileId) {
     document.getElementById('add-show-profile-id').value = profileId;
     document.getElementById('add-show-season').value = finalSeason;
     document.getElementById('add-show-max-age').value = '30';
+    document.getElementById('add-show-dir-name').value = '';
 
     document.getElementById('add-show-page-1').style.display = 'none';
     document.getElementById('add-show-page-2').style.display = 'block';
@@ -123,7 +125,8 @@ export async function handleAddShowDetailsSubmit(e) {
         show_name: document.getElementById('add-show-name').value,
         profile_id: document.getElementById('add-show-profile-id').value,
         season_name: document.getElementById('add-show-season').value,
-        max_age: document.getElementById('add-show-max-age').value
+        max_age: document.getElementById('add-show-max-age').value,
+        directory_name: document.getElementById('add-show-dir-name').value || null
     };
 
     try {
@@ -223,6 +226,7 @@ export function openEditShowModal(show) {
     document.getElementById('edit-show-name').value = show.show_name;
     document.getElementById('edit-show-season').value = show.season_name || '';
     document.getElementById('edit-show-max-age').value = show.max_age || '';
+    document.getElementById('edit-show-dir-name').value = show.directory_name || '';
     document.getElementById('edit-show-anidb-id').value = show.anidb_id || '';
 
     document.getElementById('untrack-show-btn').onclick = () => {
@@ -263,6 +267,7 @@ export async function handleEditShowSubmit(e) {
         show_name: document.getElementById('edit-show-name').value,
         season_name: document.getElementById('edit-show-season').value,
         max_age: document.getElementById('edit-show-max-age').value,
+        directory_name: document.getElementById('edit-show-dir-name').value || null,
         anidb_id: document.getElementById('edit-show-anidb-id').value
     };
 
