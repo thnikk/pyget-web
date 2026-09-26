@@ -367,6 +367,7 @@ def check_single_show(tracked_show_id):
     """
     try:
         conn = sqlite3.connect(DB_PATH, timeout=30)
+        conn.row_factory = sqlite3.Row
         c = conn.cursor()
 
         c.execute('SELECT * FROM tracked_shows WHERE id = ?',
