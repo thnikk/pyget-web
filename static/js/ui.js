@@ -121,6 +121,25 @@ export function formatDate(dateStr) {
     });
 }
 
+export function contrastColor(hex) {
+    // Returns '#ffffff' or '#000000' based on the luminance of a hex color,
+    // maximizing text contrast on the given background.
+    let h = (hex || '').trim();
+    if (!/^#?[0-9a-f]{3}$/i.test(h) && !/^#?[0-9a-f]{6}$/i.test(h)) {
+        h = '#88c0d0';
+    }
+    h = h.replace('#', '');
+    if (h.length === 3) {
+        h = h.split('').map(c => c + c).join('');
+    }
+    const r = parseInt(h.slice(0, 2), 16) / 255;
+    const g = parseInt(h.slice(2, 4), 16) / 255;
+    const b = parseInt(h.slice(4, 6), 16) / 255;
+    const lin = c => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    const lum = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+    return lum > 0.179 ? '#000000' : '#ffffff';
+}
+
 export function openModal(id) {
     document.getElementById(id).classList.add('visible');
 }

@@ -1,5 +1,5 @@
 import { api } from './api.js';
-import { openModal, closeModal, showNotification, escapeHtml } from './ui.js';
+import { openModal, closeModal, showNotification, escapeHtml, contrastColor } from './ui.js';
 
 function relativeTime(dateStr) {
     const date = new Date(dateStr + 'Z');
@@ -98,7 +98,7 @@ export async function loadShows(searchQuery = '') {
                     <div class="source-badges">
                         ${profiles.map(source => `
                             <div class="source-badge"
-                                 style="background-color: ${source.color || '#88c0d0'}"
+                                 style="background-color: ${source.color || '#88c0d0'}; color: ${contrastColor(source.color || '#88c0d0')}"
                                  data-name="${escapeHtml(searchQuery)}"
                                  data-id="${source.id}"
                                  title="${source.name}${source.uploader ? ' - ' + source.uploader : ''}${source.quality ? ' - ' + source.quality : ''}">
@@ -128,7 +128,7 @@ export async function loadShows(searchQuery = '') {
                 <div class="source-badges">
                     ${show.sources.map(source => `
                         <div class="source-badge cached-badge"
-                             style="background-color: ${source.color || '#88c0d0'}"
+                             style="background-color: ${source.color || '#88c0d0'}; color: ${contrastColor(source.color || '#88c0d0')}"
                              data-name="${escapeHtml(show.name)}"
                              data-id="${source.profile_id}"
                              title="${source.profile_name}${source.uploader ? ' - ' + source.uploader : ''}${source.quality ? ' - ' + source.quality : ''}">
@@ -244,7 +244,7 @@ export async function loadTrackedShows() {
                     <div class="show-card-title" title="${show.show_name}">${show.show_name}</div>
                     <div class="show-card-meta">
                         <div class="show-card-badge"
-                             style="background-color: ${show.color || '#88c0d0'}">
+                             style="background-color: ${show.color || '#88c0d0'}; color: ${contrastColor(show.color || '#88c0d0')}">
                             ${show.profile_name}
                         </div>
                         ${show.last_release_at ? `

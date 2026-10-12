@@ -523,12 +523,12 @@ form .btn {
 }
 
 .source-badge-name {
-    color: var(--nord0);
+    color: inherit;
 }
 
 .source-badge-quality {
     background: rgba(0, 0, 0, 0.2);
-    color: var(--nord6);
+    color: inherit;
     padding: 2px 8px;
     border-radius: 3px;
     font-size: 0.75rem;
