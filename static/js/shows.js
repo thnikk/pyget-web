@@ -1,6 +1,69 @@
 import { api } from './api.js';
 import { openModal, closeModal, showNotification, escapeHtml } from './ui.js';
 
+function relativeTime(dateStr) {
+    const date = new Date(dateStr + 'Z');
+    const diffSec = Math.floor((Date.now() - date) / 1000);
+    if (isNaN(diffSec) || diffSec < 0) return 'just now';
+    if (diffSec < 60) return 'just now';
+
+    const intervals = [
+        [60, 'minute'],
+        [3600, 'hour'],
+        [86400, 'day'],
+        [604800, 'week'],
+        [2592000, 'month'],
+        [31536000, 'year']
+    ];
+    for (let i = intervals.length - 1; i >= 0; i--) {
+        const [secs, unit] = intervals[i];
+        const count = Math.floor(diffSec / secs);
+        if (count >= 1) {
+            return `${count} ${unit}${count === 1 ? '' : 's'} ago`;
+        }
+    }
+    return 'just now';
+}
+
+let lastReleasePopover = null;
+
+function showLastReleasePopover(anchor, releaseDate) {
+    hideLastReleasePopover();
+    if (!releaseDate) return;
+
+    const popover = document.createElement('div');
+    popover.className = 'last-release-popover';
+    popover.innerHTML = `
+        <div class="last-release-popover-time">Last episode ${relativeTime(releaseDate)}</div>
+        <div class="last-release-popover-date">${escapeHtml(releaseDate)}</div>
+    `;
+    document.body.appendChild(popover);
+
+    // Position near the icon, keeping it on-screen
+    const anchorRect = anchor.getBoundingClientRect();
+    const popRect = popover.getBoundingClientRect();
+    let left = anchorRect.left + anchorRect.width / 2 - popRect.width / 2;
+    left = Math.max(8, Math.min(left, window.innerWidth - popRect.width - 8));
+    let top = anchorRect.bottom + 8;
+    if (top + popRect.height > window.innerHeight) {
+        top = anchorRect.top - popRect.height - 8;
+    }
+
+    popover.style.left = `${left}px`;
+    popover.style.top = `${top}px`;
+    lastReleasePopover = popover;
+}
+
+function hideLastReleasePopover() {
+    if (lastReleasePopover) {
+        lastReleasePopover.remove();
+        lastReleasePopover = null;
+    }
+}
+
+window.addEventListener('scroll', hideLastReleasePopover, { passive: true });
+window.addEventListener('resize', hideLastReleasePopover, { passive: true });
+
 export function resetAddShowModal() {
     closeModal('add-show-modal');
     document.getElementById('show-search').value = '';
@@ -179,9 +242,16 @@ export async function loadTrackedShows() {
                 </div>
                 <div class="show-card-content">
                     <div class="show-card-title" title="${show.show_name}">${show.show_name}</div>
-                    <div class="show-card-badge"
-                         style="background-color: ${show.color || '#88c0d0'}">
-                        ${show.profile_name}
+                    <div class="show-card-meta">
+                        <div class="show-card-badge"
+                             style="background-color: ${show.color || '#88c0d0'}">
+                            ${show.profile_name}
+                        </div>
+                        ${show.last_release_at ? `
+                            <div class="show-card-last" data-last-release="${escapeHtml(show.last_release_at)}">
+                                <i class="fa-solid fa-clock show-card-last-icon"></i>
+                            </div>
+                        ` : ''}
                     </div>
                 </div>
             </div>
@@ -210,6 +280,12 @@ export async function loadTrackedShows() {
                 await untrackShow(id);
                 loadTrackedShows();
             };
+        });
+
+        // Last-release popover on hover
+        container.querySelectorAll('.show-card-last').forEach(el => {
+            el.addEventListener('mouseenter', () => showLastReleasePopover(el, el.dataset.lastRelease));
+            el.addEventListener('mouseleave', hideLastReleasePopover);
         });
 
     } catch (error) {

@@ -672,6 +672,59 @@ form .btn {
     text-overflow: ellipsis;
 }
 
+.show-card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.show-card-last {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    padding: 4px;
+    border-radius: 999px;
+    cursor: default;
+    color: var(--nord4);
+    transition: color 0.2s ease, background 0.2s ease;
+}
+
+.show-card-last:hover {
+    color: var(--nord6);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.show-card-last-icon {
+    font-size: 1.05rem;
+}
+
+.last-release-popover {
+    position: fixed;
+    z-index: 1000;
+    background: var(--nord1);
+    border: 1px solid var(--nord3);
+    border-radius: 10px;
+    padding: 8px 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+    max-width: 280px;
+}
+
+.last-release-popover-time {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--nord6);
+    white-space: nowrap;
+}
+
+.last-release-popover-date {
+    font-size: 0.75rem;
+    color: var(--nord4);
+    margin-top: 2px;
+    white-space: nowrap;
+}
+
 .settings-tabs {
     display: flex;
     border-bottom: 1px solid var(--nord3);

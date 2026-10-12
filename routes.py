@@ -261,7 +261,10 @@ def manage_tracked_shows():
         c.execute('''
             SELECT ts.id, ts.show_name, ts.feed_url, ts.profile_id, ts.added_at,
                    ts.season_name, ts.max_age, ts.image_path, ts.directory_name, ts.anidb_id,
-                   fp.name as profile_name, fp.base_url, fp.uploader, fp.quality, fp.color
+                   fp.name as profile_name, fp.base_url, fp.uploader, fp.quality, fp.color,
+                   (SELECT MAX(COALESCE(dt.published_at, dt.added_at))
+                    FROM downloaded_torrents dt
+                    WHERE dt.tracked_show_id = ts.id) AS last_release_at
             FROM tracked_shows ts
             LEFT JOIN feed_profiles fp ON ts.profile_id = fp.id
             ORDER BY ts.added_at DESC
@@ -283,7 +286,8 @@ def manage_tracked_shows():
                 'base_url': row['base_url'],
                 'uploader': row['uploader'],
                 'quality': row['quality'],
-                'color': row['color'] or '#88c0d0'
+                'color': row['color'] or '#88c0d0',
+                'last_release_at': row['last_release_at']
             })
         conn.close()
         return jsonify(tracked)
